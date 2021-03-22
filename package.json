@@ -1,0 +1,27 @@
+{
+  "name": "some-game",
+  "version": "1.0.0",
+  "description": "This is a project including working with something to make something cool.",
+  "main": "index.js",
+  "dependencies": {
+    "parcel-bundler": "^1.12.5"
+  },
+  "devDependencies": {
+    "sass": "^1.32.8"
+  },
+  "scripts": {
+    "dev": "parcel serve ./src/index.html",
+    "build": "parcel build ./src/index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GeorgDV/some-game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GeorgDV/some-game/issues"
+  },
+  "homepage": "https://github.com/GeorgDV/some-game#readme"
+}
