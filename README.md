@@ -1,2 +1,2 @@
-# some-game
-This is a project including working with canvas or something similar to make something cool.
+# basically-space-invaders
+This is a project to make an imitation game for Space Invaders using just JavaScript/HTML/CSS.
