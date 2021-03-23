@@ -6,20 +6,18 @@ var spriteHeigth = px * 4; // Height of a model sprite.
 
 var padding = px * 2; // Padding from the edge of the canvas.
 
-var timerInterval = 750; // Timer interval for invaders movement.
-
 var timers = {
   enemyTimer: {
     value: null,
-    interval: 750,
+    interval: 620,
   },
   playerTimer: {
     value: null,
-    interval: 10,
+    interval: 20,
   },
   bulletTimer: {
     value: null,
-    interval: 5,
+    interval: 15,
   },
 }
 
@@ -36,9 +34,8 @@ var moveDirection = direction.RIGHT; // By default invaders move right at the be
 
 var ID = -1; // Id increment for any objects.
 
-var isKeyPressed = false;
+var isShootKeyPressed = false;
 window.addEventListener('keydown', (event) => handleKeyDown(event), false);
-window.addEventListener('keyup', () => isKeyPressed = false);
 
 window.addEventListener('load', () => {
   initCanvas();
@@ -54,7 +51,7 @@ function initCanvas() {
   canvas = document.querySelector('#canvas');
   context = canvas.getContext('2d');
   //canvas.width = window.innerWidth;
-  canvas.width = 600;
+  canvas.width = 800;
   canvas.height = window.innerHeight - 2;
 }
 
@@ -193,10 +190,6 @@ function invadersStepDown() {
 }
 
 function updateInvaders() {
-  if (!invaders.length) {
-    clearInterval(timers.enemyTimer.value);
-    alert('You Won!');
-  }
   invaders.forEach((invader) => {
     // rectangle to clear each sprite's previous frame individually.
     context.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px);
@@ -229,11 +222,6 @@ function updatePlayer() {
 }
 
 function handleKeyDown(event) {
-  if (isKeyPressed) {
-    return;
-  }
-  isKeyPressed = true;
-
   switch(event.keyCode) {
     case 37: 
       player.velocity.x = -1;
@@ -242,7 +230,12 @@ function handleKeyDown(event) {
       player.velocity.x = 1;
       break;
     case 32:
+      if (isShootKeyPressed) {
+        return;
+      }
+      isShootKeyPressed = true;
       shoot();
+      setTimeout(() => isShootKeyPressed = false, 250);
       break;
   }
 }
@@ -276,8 +269,8 @@ function updateBullets() {
   }
 
   bullets.forEach((bullet) => {
-    bullet.y.start -= 5;
-    context.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 3);
+    bullet.y.start -= 10;
+    context.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 4);
     if (bullet.y.start < 0) {
       bullets = bullets.filter((item) => item.id !== bullet.id);
     } else {
@@ -303,9 +296,10 @@ function detectBulletAndInvaderCollision() {
 
       // Detect collision. 
       if (bulletX <= invaderRightX &&
-          bulletX >= invaderLeftX - (px / 2) &&
-          bulletY <= invaderBottomY &&
-          bulletY >= invaderTopY) {
+        bulletX >= invaderLeftX - (px / 2) &&
+        bulletY <= invaderBottomY &&
+        bulletY >= invaderTopY) {
+
         // Remove bullet.
         context.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 3);
         bullets = bullets.filter((item) => item.id !== bullet.id);
@@ -313,6 +307,16 @@ function detectBulletAndInvaderCollision() {
         // Remove invader.
         context.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px);
         invaders = invaders.filter((item) => item.id !== invader.id);
+
+        // Update timer.
+        // 600 / number of invaders
+        let timerStep = Math.floor((timers.enemyTimer.interval - 20) / (invaders.length));
+        timers.enemyTimer.interval -= timerStep;
+        initEnemiesTimer();
+        if (!invaders.length) {
+          clearInterval(timers.enemyTimer.value);
+          alert('You Won!');
+        }
       }
     });
   });
