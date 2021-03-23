@@ -1,29 +1,31 @@
 var templates = require('./templates.json'); // Sprite templates.
 
 var px = 10; // Side length of a single "pixel".
-var spriteWidth = px * 5; // Width of a sprite.
-var spriteHeigth = px * 4; // Height of a sprite.
+var spriteWidth = px * 5; // Width of a model sprite.
+var spriteHeigth = px * 4; // Height of a model sprite.
 
 var padding = px * 2; // Padding from the edge of the canvas.
 
-var timerInterval = 500; // Timer interval for movement.
+var timerInterval = 500; // Timer interval for invaders movement.
 
 var player = {}; // Player "sprite" object.
-var enemies = []; // Enemies "sprites" objects.
-var enemyMaxX = 100; // Enemy highest X coordinate.
-var enemyMinX = 100; // Enemy lowest X coordinate.
+var invaders = []; // Invaders "sprites" objects.
+var bullets = []; // Bullet objects.
 
+// Move direction enum.
 const direction = {
   LEFT: 'left',
   RIGHT: 'right',
 }
-var moveDirection = direction.RIGHT;
+var moveDirection = direction.RIGHT; // By default invaders move right at the beginning.
+
+var steps = 0; // How many times invaders have stepped down.
 
 window.addEventListener('keydown', (event) => handleKeyDown(event), false);
 
 window.addEventListener('load', () => {
   initCanvas();
-  initEnemies();
+  initInvaders();
   initPlayer();
 
   initEnemiesTimer();
@@ -45,7 +47,10 @@ function createSprite(id, startX, startY,) {
   }
 
   return {
-    data: template.data,
+    template: {
+      id: id,
+      data: template.data,
+    },
     x: {
       start: startX,
       current: startX,
@@ -61,12 +66,27 @@ function createSprite(id, startX, startY,) {
   }
 }
 
-function drawSprite(sprite, fillStyle) {
-  sprite.data.forEach((row) => {
+function updateSpriteTemplate(oldSprite, newTemplateId) {
+  let template = templates.find((template) => template.id === newTemplateId);
+  if (!template) {
+    throw new Error(`No sprite template for '${id}' was found.`);
+  }
+
+  return {
+    ...oldSprite,
+    template: {
+      id: newTemplateId,
+      data: template.data,
+    },
+  }
+}
+
+function drawSprite(sprite, fillStyle, pxWidth, pxHeight) {
+  sprite.template.data.forEach((row) => {
     row.forEach((value) => {
       if (value === 1) {
         context.beginPath();
-        context.rect(sprite.x.current, sprite.y.current, px, px);
+        context.rect(sprite.x.current, sprite.y.current, pxWidth ? pxWidth : px, pxHeight ? pxHeight : px);
         context.fillStyle = fillStyle ? fillStyle : '#ffffff';
         context.fill();
         context.closePath();
@@ -79,16 +99,20 @@ function drawSprite(sprite, fillStyle) {
   sprite.y.current = sprite.y.start;
 }
 
-function initEnemies() {
-  let rows = Math.floor((canvas.height / 3) / (spriteWidth));
+function initInvaders() {
+  let rows = Math.floor((canvas.height / 3) / (spriteWidth * 1.5));
   let columns = Math.floor((canvas.width) / (spriteHeigth + px * 5));
   for (let row = 0; row < rows; row++) {
+    let templateId = 'space_ship_2-1';
+    if (row === 0) {
+      templateId = 'space_ship_1-1';
+    }
     for (let col = 0; col < columns; col++) {
-      //  width or length  +  (margin)     * X/Y postition + padding from edge
+      //  width or length + (margin) * X/Y postition + padding from edge.
       let x = (spriteWidth + px * 2) * col + padding;
-      let y = (spriteHeigth + px * 2) * row + padding;
-      let sprite = createSprite('space_ship_1', x, y);
-      enemies.push(sprite);
+      let y = (spriteHeigth + px * 2) * row + padding / 2;
+      let sprite = createSprite(templateId, x, y);
+      invaders.push(sprite);
       drawSprite(sprite);
     }
   }
@@ -104,28 +128,49 @@ function initPlayer() {
 function initEnemiesTimer() {
   setInterval(() => {
     updateMoveDirection();
-    updateEnemies();
+    updateInvaders();
   }, timerInterval);
 }
 
 function initPlayerTimer() {
-  setInterval(() => updatePlayer(), 10);
+  setInterval(() => {
+    updateBullets();
+    updatePlayer();
+  }, 10);
 }
 
 function updateMoveDirection() {
-  enemies.forEach((sprite) => {
+  let isDirectionChanging = false;
+  invaders.forEach((sprite) => {
     if (sprite.x.start >= (canvas.width - spriteWidth - padding)) {
+      isDirectionChanging = true;
       moveDirection = direction.LEFT;
     } else if (sprite.x.start <= (0 + padding)) {
+      isDirectionChanging = true;
       moveDirection = direction.RIGHT;
     }
   });
+
+  if (isDirectionChanging) {
+    invadersStepDown();
+  }
 }
 
-function updateEnemies() {
-  enemies.forEach((sprite) => {
+function invadersStepDown() {
+  steps += 1;
+  invaders.forEach((sprite) => {
+    sprite.y.start += px;
+    sprite.y.current = sprite.y.start;
+  });
+}
+
+function updateInvaders() {
+  invaders.forEach((sprite) => {
     // rectangle to clear each sprite's previous frame individually.
-    context.clearRect(sprite.x.start, sprite.y.start, spriteWidth, spriteHeigth);
+    context.clearRect(sprite.x.start, sprite.y.start - px, spriteWidth, spriteHeigth + px);
+    // context.rect(sprite.x.start, sprite.y.start - px, spriteWidth, spriteHeigth + px);
+    // context.strokeStyle = '#777777';
+    // context.stroke();
 
     switch (moveDirection) {
       case direction.RIGHT:
@@ -161,6 +206,7 @@ function handleKeyDown(event) {
       break;
     case 32:
       console.log('shoot');
+      shoot();
       break;
   }
 }
@@ -179,4 +225,23 @@ function movePlayer() {
     player.x.start += px / 5;
     player.x.current += px / 5;
   }
+}
+
+function shoot() {
+  let bullet = createSprite('bullet', player.x.start + (spriteWidth / 2 - 2), player.y.start - spriteHeigth / 2);
+  bullet.velocity.y = -1;
+  bullets.push(bullet);
+  drawSprite(bullet, '#77ff00', px / 2);
+}
+
+function updateBullets() {
+  if (!bullets.length) {
+    return;
+  }
+
+  bullets.forEach((bullet) => {
+    context.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 3);
+    bullet.y.start -= 5;
+    drawSprite(bullet, '#77ff00', px / 2);
+  });
 }
