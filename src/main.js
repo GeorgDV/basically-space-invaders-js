@@ -6,7 +6,22 @@ var spriteHeigth = px * 4; // Height of a model sprite.
 
 var padding = px * 2; // Padding from the edge of the canvas.
 
-var timerInterval = 500; // Timer interval for invaders movement.
+var timerInterval = 750; // Timer interval for invaders movement.
+
+var timers = {
+  enemyTimer: {
+    value: null,
+    interval: 750,
+  },
+  playerTimer: {
+    value: null,
+    interval: 10,
+  },
+  bulletTimer: {
+    value: null,
+    interval: 5,
+  },
+}
 
 var player = {}; // Player "sprite" object.
 var invaders = []; // Invaders "sprites" objects.
@@ -19,9 +34,11 @@ const direction = {
 }
 var moveDirection = direction.RIGHT; // By default invaders move right at the beginning.
 
-var steps = 0; // How many times invaders have stepped down.
+var ID = -1; // Id increment for any objects.
 
+var isKeyPressed = false;
 window.addEventListener('keydown', (event) => handleKeyDown(event), false);
+window.addEventListener('keyup', () => isKeyPressed = false);
 
 window.addEventListener('load', () => {
   initCanvas();
@@ -30,6 +47,7 @@ window.addEventListener('load', () => {
 
   initEnemiesTimer();
   initPlayerTimer();
+  initBulletsTimer();
 });
 
 function initCanvas() {
@@ -47,8 +65,9 @@ function createSprite(id, startX, startY,) {
   }
 
   return {
+    id: ID++,
     template: {
-      id: id,
+      templateId: id,
       data: template.data,
     },
     x: {
@@ -126,17 +145,27 @@ function initPlayer() {
 }
 
 function initEnemiesTimer() {
-  setInterval(() => {
+  timers.enemyTimer.value = setInterval(() => {
     updateMoveDirection();
     updateInvaders();
-  }, timerInterval);
+  }, timers.enemyTimer.interval);
 }
 
 function initPlayerTimer() {
-  setInterval(() => {
-    updateBullets();
+  timers.playerTimer.value = setInterval(() => {
     updatePlayer();
-  }, 10);
+  }, timers.playerTimer.interval);
+}
+
+function initBulletsTimer() {
+  timers.bulletTimer.value = setInterval(() => {
+    if (!bullets.length) {
+      return;
+    } else {
+      detectBulletAndInvaderCollision();
+      updateBullets();
+    }
+  }, timers.bulletTimer.interval);
 }
 
 function updateMoveDirection() {
@@ -157,7 +186,6 @@ function updateMoveDirection() {
 }
 
 function invadersStepDown() {
-  steps += 1;
   invaders.forEach((sprite) => {
     sprite.y.start += px;
     sprite.y.current = sprite.y.start;
@@ -165,28 +193,32 @@ function invadersStepDown() {
 }
 
 function updateInvaders() {
-  invaders.forEach((sprite) => {
+  if (!invaders.length) {
+    clearInterval(timers.enemyTimer.value);
+    alert('You Won!');
+  }
+  invaders.forEach((invader) => {
     // rectangle to clear each sprite's previous frame individually.
-    context.clearRect(sprite.x.start, sprite.y.start - px, spriteWidth, spriteHeigth + px);
+    context.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px);
     // context.rect(sprite.x.start, sprite.y.start - px, spriteWidth, spriteHeigth + px);
     // context.strokeStyle = '#777777';
     // context.stroke();
 
     switch (moveDirection) {
       case direction.RIGHT:
-        if (sprite.x.start < (canvas.width - spriteWidth - padding)) {
-          sprite.x.start += px;
-          sprite.x.current = sprite.x.start;
+        if (invader.x.start < (canvas.width - spriteWidth - padding)) {
+          invader.x.start += px;
+          invader.x.current = invader.x.start;
         } 
         break;
       case direction.LEFT:
-        if (sprite.x.start > (0 + padding)) {
-          sprite.x.start -= px;
-          sprite.x.current = sprite.x.start;
+        if (invader.x.start > (0 + padding)) {
+          invader.x.start -= px;
+          invader.x.current = invader.x.start;
         }
         break;
     }
-    drawSprite(sprite);
+    drawSprite(invader);
   });
 }
 
@@ -197,6 +229,11 @@ function updatePlayer() {
 }
 
 function handleKeyDown(event) {
+  if (isKeyPressed) {
+    return;
+  }
+  isKeyPressed = true;
+
   switch(event.keyCode) {
     case 37: 
       player.velocity.x = -1;
@@ -205,7 +242,6 @@ function handleKeyDown(event) {
       player.velocity.x = 1;
       break;
     case 32:
-      console.log('shoot');
       shoot();
       break;
   }
@@ -240,8 +276,44 @@ function updateBullets() {
   }
 
   bullets.forEach((bullet) => {
-    context.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 3);
     bullet.y.start -= 5;
-    drawSprite(bullet, '#77ff00', px / 2);
+    context.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 3);
+    if (bullet.y.start < 0) {
+      bullets = bullets.filter((item) => item.id !== bullet.id);
+    } else {
+      drawSprite(bullet, '#77ff00', px / 2);
+    }
+  });
+}
+
+function detectBulletAndInvaderCollision() {
+  if (!bullets.length || !invaders.length) {
+    return;
+  }
+
+  invaders.forEach((invader) => {
+    bullets.forEach((bullet) => {
+      let bulletX = bullet.x.start;
+      let bulletY = bullet.y.start;
+
+      let invaderTopY = invader.y.start;
+      let invaderLeftX = invader.x.start;
+      let invaderBottomY = invader.y.start + spriteHeigth;
+      let invaderRightX = invader.x.start + spriteWidth;
+
+      // Detect collision. 
+      if (bulletX <= invaderRightX &&
+          bulletX >= invaderLeftX - (px / 2) &&
+          bulletY <= invaderBottomY &&
+          bulletY >= invaderTopY) {
+        // Remove bullet.
+        context.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 3);
+        bullets = bullets.filter((item) => item.id !== bullet.id);
+
+        // Remove invader.
+        context.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px);
+        invaders = invaders.filter((item) => item.id !== invader.id);
+      }
+    });
   });
 }
