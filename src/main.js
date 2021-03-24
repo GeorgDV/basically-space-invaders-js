@@ -1,6 +1,8 @@
+import 'regenerator-runtime/runtime';
+
 // Canvas variables.
-var ctx;
-var canvas;
+let ctx;
+let canvas;
 
 // Sound generation things.
 import * as Tone from 'tone';
@@ -13,21 +15,22 @@ let synth = new Tone.Synth().toDestination();
 // Templates from creating sprites.
 const templates = require('./templates.json');
 
-var player = {}; // Player "sprite" object.
-var invaders = []; // Invaders "sprites" objects.
-var bullets = []; // Bullet "sprite" objects.
+let player = {}; // Player "sprite" object.
+let invaders = []; // Invaders "sprites" objects.
+let bullets = []; // Bullet "sprite" objects.
 
 // Game variables.
-var ID = -1; // Id increment for ingame objects.
+let isGameStarted = false;
+let ID = -1; // Id increment for ingame objects.
 
-var px = 10; // Size a single "pixel".
-var spriteWidth = px * 5; // Width of a default model sprite. (10 * 5)
-var spriteHeigth = px * 4; // Height of a default  model sprite. (10 * 4)
+const px = 5; // Size a single "pixel".
+const spriteWidth = px * 9; // Width of a default model sprite. (pixel * 9)
+const spriteHeigth = px * 7; // Height of a default  model sprite. (pixel * 7)
 
-var padding = px * 2; // Space from the edge of the canvas.
+const padding = 20; // Space from the edge of the canvas.
 
 // Timer objects.
-var timers = {
+let timers = {
   enemyTimer: {
     value: null,
     interval: 620,
@@ -47,21 +50,40 @@ const direction = {
   LEFT: 'left',
   RIGHT: 'right',
 }
-var invadersMoveDirection = direction.RIGHT; // By default invaders move right at the beginning.
+let invadersMoveDirection = direction.RIGHT; // By default invaders move right at the beginning.
+let invadersStep = px * 2;
 
-var isShootKeyPressed = false;
+let isShootKeyPressed = false;
 window.addEventListener('keydown', (event) => handleKeyDown(event), false);
+window.addEventListener('click', () => {
+  if (!isGameStarted) {
+    StartAudioContext(Tone.getContext());
+    initGame();
+    isGameStarted = true;
+  }
+});
 
-window.addEventListener('load', () => {
-  initCanvas();
-  initAudioContext();
+function initGame() {
+  ctx.clearRect(0,0, canvas.width, canvas.height);
+
   initInvaders();
   initPlayer();
 
   initEnemiesTimer();
   initPlayerTimer();
   initBulletsTimer();
-});
+}
+
+window.onload = () => {
+  initCanvas();
+  initAudio();
+  
+  // Welcome text.
+  ctx.font = "40px Arial";
+  ctx.fillStyle = "white";
+  ctx.textAlign = "center";
+  ctx.fillText("Click To Start", canvas.width/2, canvas.height/2);
+};
 
 function initCanvas() {
   canvas = document.querySelector('#canvas');
@@ -71,10 +93,9 @@ function initCanvas() {
   canvas.height = window.innerHeight - 2;
 }
 
-function initAudioContext() {
+function initAudio() {
   let audioContext = new Tone.Context();
   Tone.setContext(audioContext);
-  StartAudioContext(audioContext, '#canvas');
 }
 
 function createSprite(id, startX, startY,) {
@@ -86,7 +107,7 @@ function createSprite(id, startX, startY,) {
   return {
     id: ID++,
     template: {
-      templateId: id,
+      id: id,
       data: template.data,
     },
     x: {
@@ -139,17 +160,18 @@ function drawSprite(sprite, fillStyle, pxWidth, pxHeight) {
 
 function initInvaders() {
   let rows = Math.floor((canvas.height / 3) / (spriteWidth * 1.5));
-  let columns = Math.floor((canvas.width) / (spriteHeigth + px * 5));
+  let columns = Math.floor((canvas.width) / (spriteHeigth  * 3));
   for (let row = 0; row < rows; row++) {
-    let templateId = 'space_ship_2-1';
+    let id = 'invader_2-1';
     if (row === 0) {
-      templateId = 'space_ship_1-1';
+      id = 'invader_1-1';
     }
+
     for (let col = 0; col < columns; col++) {
       //  width or length + (margin) * X/Y postition + padding from edge.
       let x = (spriteWidth + px * 2) * col + padding;
       let y = (spriteHeigth + px * 2) * row + padding / 2;
-      let sprite = createSprite(templateId, x, y);
+      let sprite = createSprite(id, x, y);
       invaders.push(sprite);
       drawSprite(sprite);
     }
@@ -206,16 +228,16 @@ function updateMoveDirection() {
 
 function invadersStepDown() {
   invaders.forEach((sprite) => {
-    sprite.y.start += px;
+    sprite.y.start += invadersStep;
     sprite.y.current = sprite.y.start;
   });
-  playStepSound();
+  //playStepSound(); // Should use?
 }
 
 function updateInvaders() {
   invaders.forEach((invader) => {
     // Draw a rectangle to clear each sprite's previous frame individually.
-    ctx.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px);
+    ctx.clearRect(invader.x.start, invader.y.start - invadersStep, spriteWidth, spriteHeigth + invadersStep);
 
     switch (invadersMoveDirection) {
       case direction.RIGHT:
@@ -231,13 +253,38 @@ function updateInvaders() {
         }
         break;
     }
+    
+    // Demo attempt at animating invaders movement.
+    // let index;
+    // switch (invader.template.id) {
+    //   case 'invader_1-1':
+    //     invader = updateSpriteTemplate(invader, 'invader_1-2');
+    //     index = invaders.map((item) => item.id).indexOf(invader.id);
+    //     invaders[index] = invader;
+    //     break;
+    //   case 'invader_1-2':
+    //     invader = updateSpriteTemplate(invader, 'invader_1-1');
+    //     index = invaders.map((item) => item.id).indexOf(invader.id);
+    //     invaders[index] = invader;
+    //     break;
+    //   case 'invader_2-1':
+    //     invader = updateSpriteTemplate(invader, 'invader_2-2');
+    //     index = invaders.map((item) => item.id).indexOf(invader.id);
+    //     invaders[index] = invader;
+    //     break;
+    //   case 'invader_2-2':
+    //     invader = updateSpriteTemplate(invader, 'invader_2-1');
+    //     index = invaders.map((item) => item.id).indexOf(invader.id);
+    //     invaders[index] = invader;
+    //     break;
+    // }
     drawSprite(invader);
   });
 }
 
 function updatePlayer() {
   movePlayer()
-  ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + (px * 2), spriteHeigth);
+  ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth);
   drawSprite(player, '#246434');
 }
 
@@ -291,7 +338,7 @@ function updateBullets() {
 
   bullets.forEach((bullet) => {
     bullet.y.start -= 10;
-    ctx.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 4);
+    ctx.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 6);
     if (bullet.y.start < 0) {
       bullets = bullets.filter((item) => item.id !== bullet.id);
     } else {
@@ -322,12 +369,17 @@ function detectBulletAndInvaderCollision() {
         bulletY >= invaderTopY) {
 
         // Remove bullet.
-        ctx.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 3);
+        ctx.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 4);
         bullets = bullets.filter((item) => item.id !== bullet.id);
 
-        // Remove invader.
+        // Remove invader and play explosion.
         ctx.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px);
+        invader = updateSpriteTemplate(invader, 'explosion');
+        drawSprite(invader);
         invaders = invaders.filter((item) => item.id !== invader.id);
+        // Clear explosion.
+        setTimeout(() => ctx.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px), 75);
+
 
         // Step to decrease timer = 600 / number of invaders
         let timerStep = Math.floor((timers.enemyTimer.interval - 20) / (invaders.length));
@@ -349,7 +401,7 @@ function playLaserSound() {
   synthWithCrusher.triggerAttackRelease("C1", 0.1, now);
 }
 
-function playStepSound() {
-  let now = Tone.now();
-  synth.triggerAttackRelease("C3", 0.1, now);
- }
+// function playStepSound() {
+//   let now = Tone.now();
+//   synth.triggerAttackRelease("C3", 0.1, now);
+// }
