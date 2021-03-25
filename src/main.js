@@ -39,7 +39,7 @@ let timers = {
     value: null,
     interval: 20,
   },
-  bulletTimer: {
+  playerBulletTimer: {
     value: null,
     interval: 15,
   },
@@ -51,7 +51,7 @@ const direction = {
   RIGHT: 'right',
 }
 let invadersMoveDirection = direction.RIGHT; // By default invaders move right at the beginning.
-let invadersStep = px * 2;
+let invadersStep = px * 3;
 
 let isShootKeyPressed = false;
 window.addEventListener('keydown', (event) => handleKeyDown(event), false);
@@ -199,14 +199,14 @@ function initPlayerTimer() {
 }
 
 function initBulletsTimer() {
-  timers.bulletTimer.value = setInterval(() => {
+  timers.playerBulletTimer.value = setInterval(() => {
     if (!bullets.length) {
       return;
     } else {
       detectBulletAndInvaderCollision();
       updateBullets();
     }
-  }, timers.bulletTimer.interval);
+  }, timers.playerBulletTimer.interval);
 }
 
 function updateMoveDirection() {
@@ -231,7 +231,7 @@ function invadersStepDown() {
     sprite.y.start += invadersStep;
     sprite.y.current = sprite.y.start;
   });
-  //playStepSound(); // Should use?
+  playStepSound(); // Should use?
 }
 
 function updateInvaders() {
@@ -404,11 +404,9 @@ function detectBulletAndInvaderCollision() {
 }
 
 function playLaserSound() {
-  let now = Tone.now();
-  synthWithCrusher.triggerAttackRelease("C1", 0.1, now);
+  synthWithCrusher.triggerAttackRelease("C1", 0.05);
 }
 
-// function playStepSound() {
-//   let now = Tone.now();
-//   synth.triggerAttackRelease("C3", 0.1, now);
-// }
+function playStepSound() {
+  synth.triggerAttackRelease("G3", 0.05);
+}
