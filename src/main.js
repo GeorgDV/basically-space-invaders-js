@@ -33,7 +33,7 @@ const padding = 20; // Space from the edge of the canvas.
 let timers = {
   enemyTimer: {
     value: null,
-    interval: 620,
+    interval: 720,
   },
   playerTimer: {
     value: null,
@@ -169,8 +169,8 @@ function initInvaders() {
 
     for (let col = 0; col < columns; col++) {
       //  width or length + (margin) * X/Y postition + padding from edge.
-      let x = (spriteWidth + px * 2) * col + padding;
-      let y = (spriteHeigth + px * 2) * row + padding / 2;
+      let x = (spriteWidth + px * 3) * col + padding;
+      let y = (spriteHeigth + px * 3) * row + padding / 2;
       let sprite = createSprite(id, x, y);
       invaders.push(sprite);
       drawSprite(sprite);
@@ -242,13 +242,13 @@ function updateInvaders() {
     switch (invadersMoveDirection) {
       case direction.RIGHT:
         if (invader.x.start < (canvas.width - spriteWidth - padding)) {
-          invader.x.start += px;
+          invader.x.start += px * 2;
           invader.x.current = invader.x.start;
         } 
         break;
       case direction.LEFT:
         if (invader.x.start > (0 + padding)) {
-          invader.x.start -= px;
+          invader.x.start -= px * 2;
           invader.x.current = invader.x.start;
         }
         break;
@@ -382,7 +382,7 @@ function detectBulletAndInvaderCollision() {
         // Remove invader and play explosion.
         ctx.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px);
         invader = updateSpriteTemplate(invader, 'explosion');
-        drawSprite(invader, '#ffffff', px -1, px - 1);
+        drawSprite(invader, '#ffffff', px - 2, px - 2);
         invaders = invaders.filter((item) => item.id !== invader.id);
         // Clear explosion.
         setTimeout(() => ctx.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px), 75);
@@ -396,7 +396,7 @@ function detectBulletAndInvaderCollision() {
         initEnemiesTimer();
         if (!invaders.length) {
           clearInterval(timers.enemyTimer.value);
-          alert('You Won!');
+          setTimeout(() => alert('You Won!'), 500);
         }
       }
     });
