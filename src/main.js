@@ -339,10 +339,17 @@ function updateBullets() {
   bullets.forEach((bullet) => {
     bullet.y.start -= 10;
     ctx.clearRect(bullet.x.start, bullet.y.start, px / 2, px * 6);
+
+    // Bullet hits wall.
     if (bullet.y.start < 0) {
+      bullet = updateSpriteTemplate(bullet, 'bullet_hit_wall');
+      bullet.x.start -= px * 5 / 2; // Move new sprite to middle of bullet hit.
+      bullet.x.current = bullet.x.start;
+      drawSprite(bullet, '#ff1100', px - 2, px - 2);
       bullets = bullets.filter((item) => item.id !== bullet.id);
+      setTimeout(() => ctx.clearRect(bullet.x.start, bullet.y.start + px * 2, px * 5, px * 2), 150);
     } else {
-      drawSprite(bullet, '#77ff00', px / 2);
+      drawSprite(bullet, '#77ff00', px - 3);
     }
   });
 }
@@ -375,7 +382,7 @@ function detectBulletAndInvaderCollision() {
         // Remove invader and play explosion.
         ctx.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px);
         invader = updateSpriteTemplate(invader, 'explosion');
-        drawSprite(invader);
+        drawSprite(invader, '#ffffff', px -1, px - 1);
         invaders = invaders.filter((item) => item.id !== invader.id);
         // Clear explosion.
         setTimeout(() => ctx.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px), 75);
