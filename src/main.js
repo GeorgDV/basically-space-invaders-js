@@ -7,7 +7,7 @@ let canvas;
 // Sound generation things.
 import * as Tone from 'tone';
 import StartAudioContext from 'startaudiocontext';
-let crusher = new Tone.BitCrusher(8).toDestination();
+let crusher = new Tone.BitCrusher(6).toDestination();
 let synthWithCrusher = new Tone.Synth().connect(crusher).toDestination();
 let synth = new Tone.Synth().toDestination();
 
@@ -33,7 +33,7 @@ const padding = 20; // Space from the edge of the canvas.
 let timers = {
   enemyTimer: {
     value: null,
-    interval: 720,
+    interval: 650,
   },
   playerTimer: {
     value: null,
@@ -52,6 +52,7 @@ const direction = {
 }
 let invadersMoveDirection = direction.RIGHT; // By default invaders move right at the beginning.
 let invadersStep = px * 3;
+let invadersStepsCount = 0;
 
 let isShootKeyPressed = false;
 window.addEventListener('keydown', (event) => handleKeyDown(event), false);
@@ -62,17 +63,6 @@ window.addEventListener('click', () => {
     isGameStarted = true;
   }
 });
-
-function initGame() {
-  ctx.clearRect(0,0, canvas.width, canvas.height);
-
-  initInvaders();
-  initPlayer();
-
-  initEnemiesTimer();
-  initPlayerTimer();
-  initBulletsTimer();
-}
 
 window.onload = () => {
   initCanvas();
@@ -85,12 +75,23 @@ window.onload = () => {
   ctx.fillText("Click To Start", canvas.width/2, canvas.height/2);
 };
 
+function initGame() {
+  ctx.clearRect(0,0, canvas.width, canvas.height);
+
+  initInvaders();
+  initPlayer();
+
+  initEnemiesTimer();
+  initPlayerTimer();
+  initBulletsTimer();
+}
+
 function initCanvas() {
   canvas = document.querySelector('#canvas');
   ctx = canvas.getContext('2d');
   //canvas.width = window.innerWidth;
   canvas.width = 900;
-  canvas.height = window.innerHeight - 2;
+  canvas.height = window.innerHeight - 5;
 }
 
 function initAudio() {
@@ -182,7 +183,7 @@ function initPlayer() {
   let y = canvas.height - (spriteHeigth + padding);
   let x = padding;
   player = createSprite('player', x, y);
-  drawSprite(player);
+  drawSprite(player, '#008a2e');
 }
 
 function initEnemiesTimer() {
@@ -227,6 +228,7 @@ function updateMoveDirection() {
 }
 
 function invadersStepDown() {
+  invadersStepsCount += 1;
   invaders.forEach((sprite) => {
     sprite.y.start += invadersStep;
     sprite.y.current = sprite.y.start;
@@ -255,29 +257,29 @@ function updateInvaders() {
     }
     
     // Demo attempt at animating invaders movement.
-    // let index;
-    // switch (invader.template.id) {
-    //   case 'invader_1-1':
-    //     invader = updateSpriteTemplate(invader, 'invader_1-2');
-    //     index = invaders.map((item) => item.id).indexOf(invader.id);
-    //     invaders[index] = invader;
-    //     break;
-    //   case 'invader_1-2':
-    //     invader = updateSpriteTemplate(invader, 'invader_1-1');
-    //     index = invaders.map((item) => item.id).indexOf(invader.id);
-    //     invaders[index] = invader;
-    //     break;
-    //   case 'invader_2-1':
-    //     invader = updateSpriteTemplate(invader, 'invader_2-2');
-    //     index = invaders.map((item) => item.id).indexOf(invader.id);
-    //     invaders[index] = invader;
-    //     break;
-    //   case 'invader_2-2':
-    //     invader = updateSpriteTemplate(invader, 'invader_2-1');
-    //     index = invaders.map((item) => item.id).indexOf(invader.id);
-    //     invaders[index] = invader;
-    //     break;
-    // }
+    let index;
+    switch (invader.template.id) {
+      case 'invader_1-1':
+        invader = updateSpriteTemplate(invader, 'invader_1-2');
+        index = invaders.map((item) => item.id).indexOf(invader.id);
+        invaders[index] = invader;
+        break;
+      case 'invader_1-2':
+        invader = updateSpriteTemplate(invader, 'invader_1-1');
+        index = invaders.map((item) => item.id).indexOf(invader.id);
+        invaders[index] = invader;
+        break;
+      case 'invader_2-1':
+        invader = updateSpriteTemplate(invader, 'invader_2-2');
+        index = invaders.map((item) => item.id).indexOf(invader.id);
+        invaders[index] = invader;
+        break;
+      case 'invader_2-2':
+        invader = updateSpriteTemplate(invader, 'invader_2-1');
+        index = invaders.map((item) => item.id).indexOf(invader.id);
+        invaders[index] = invader;
+        break;
+    }
     drawSprite(invader);
   });
 }
@@ -285,7 +287,7 @@ function updateInvaders() {
 function updatePlayer() {
   movePlayer()
   ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth);
-  drawSprite(player, '#246434');
+  drawSprite(player, '#008a2e');
 }
 
 function handleKeyDown(event) {
@@ -345,7 +347,7 @@ function updateBullets() {
       bullet = updateSpriteTemplate(bullet, 'bullet_hit_wall');
       bullet.x.start -= (px * 5) - (px * 3); // Move new sprite to middle of bullet hit.
       bullet.x.current = bullet.x.start;
-      drawSprite(bullet, '#ff1100', px - 2, px - 2);
+      drawSprite(bullet, '#c0ff8a', px - 3, px - 3);
       bullets = bullets.filter((item) => item.id !== bullet.id);
       setTimeout(() => ctx.clearRect(bullet.x.start, bullet.y.start + px * 2, px * 5, px * 2), 150);
     } else {
@@ -389,7 +391,7 @@ function detectBulletAndInvaderCollision() {
 
 
         // Step to decrease timer = 600 / number of invaders
-        let timerStep = Math.floor((timers.enemyTimer.interval - 20) / (invaders.length));
+        let timerStep = Math.floor((timers.enemyTimer.interval - 50) / (invaders.length));
 
         // Update timer.
         timers.enemyTimer.interval -= timerStep;
@@ -408,5 +410,9 @@ function playLaserSound() {
 }
 
 function playStepSound() {
-  synth.triggerAttackRelease("G3", 0.05);
+  if (invadersStepsCount % 2 === 0) {
+    synth.triggerAttackRelease("C3", 0.05);
+  } else if (invadersStepsCount % 2 > 0) {
+    synth.triggerAttackRelease("C2", 0.05);
+  }
 }
