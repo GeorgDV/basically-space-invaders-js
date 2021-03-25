@@ -13,7 +13,8 @@
   },
   "scripts": {
     "dev": "parcel serve ./src/index.html",
-    "build": "parcel build ./src/index.html"
+    "build": "parcel build ./src/index.html",
+    "deploy": "parcel build ./src/index.html && surge dist/ --domain https://basically-space-invaders.surge.sh"
   },
   "repository": {
     "type": "git",
