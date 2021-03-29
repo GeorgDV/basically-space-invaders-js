@@ -63,6 +63,12 @@ let invadersMoveDirection = direction.RIGHT; // By default invaders move right a
 let invadersStep = px * 3;
 let invadersStepsCount = 0;
 
+let hasGameEnded = false;
+const end = {
+  playerWins: true,
+  invadersWin: false,
+}
+
 let isShootKeyPressed = false;
 window.addEventListener('keydown', (event) => {
   if (!hasGameStarted) return;
@@ -93,7 +99,7 @@ function initGame() {
   initInvaders();
   initPlayer();
 
-  initEnemiesTimer();
+  initInvadersTimer();
   initPlayerTimer();
   setTimeout(() => initInvaderBulletTimer(), 3000);
 }
@@ -235,7 +241,7 @@ function initPlayer() {
   drawSprite(player, '#008a2e');
 }
 
-function initEnemiesTimer() {
+function initInvadersTimer() {
   timers.invaderSpeedTimer.value = setInterval(() => {
     updateMoveDirection();
     updateInvaders();
@@ -262,7 +268,7 @@ function initInvaderBulletTimer() {
   timers.invaderBulletTimer.value = setInterval(() => {
     // Choose if to shoot or not.
     let random = getRandomInteger(1, invaders.length === 1 ? 6 : 24);
-    if (random === 1) {
+    if (random === 1 && invadersFront.length > 0) {
       // Get random front line invader to shoot.
       let index = Math.floor(Math.random() * invadersFront.length);
       invaderShoot(invadersFront[index]);
@@ -314,13 +320,17 @@ function updateInvadersFront(invaderToReplace) {
 
 function updateMoveDirection() {
   let isDirectionChanging = false;
-  invaders.forEach((sprite) => {
-    if (sprite.x.start >= (canvas.width - spriteWidth - padding)) {
+  invaders.forEach((invader) => {
+    if (invader.x.start >= (canvas.width - spriteWidth - padding)) {
       isDirectionChanging = true;
       invadersMoveDirection = direction.LEFT;
-    } else if (sprite.x.start <= (0 + padding)) {
+    } else if (invader.x.start <= (0 + padding)) {
       isDirectionChanging = true;
       invadersMoveDirection = direction.RIGHT;
+    }
+
+    if (invader.y.start > canvas.height - (spriteHeigth * 2) && !hasGameEnded) {
+      generateTheEnd(end.invadersWin);
     }
   });
 
@@ -331,11 +341,11 @@ function updateMoveDirection() {
 
 function invadersStepDown() {
   invadersStepsCount += 1;
-  invaders.forEach((sprite) => {
-    sprite.y.start += invadersStep;
-    sprite.y.current = sprite.y.start;
+  invaders.forEach((invader) => {
+    invader.y.start += invadersStep;
+    invader.y.current = invader.y.start;
   });
-  playStepSound(); // Should use?
+  playStepSound();
 }
 
 function updateInvaders() {
@@ -358,7 +368,7 @@ function updateInvaders() {
         break;
     }
     
-    // If invader is from front line we update it.
+    // If invader is from front line we update it (aswell).
     let indexOfFrontInvader = invadersFront.map((item) => item.id).indexOf(invader.id);
     if (indexOfFrontInvader !== -1) {
       invadersFront[indexOfFrontInvader] = invader;
@@ -412,7 +422,7 @@ function handleKeyDown(event) {
       }
       isShootKeyPressed = true;
       shoot();
-      setTimeout(() => isShootKeyPressed = false, 300);
+      setTimeout(() => isShootKeyPressed = false, 400);
       break;
   }
 }
@@ -439,7 +449,7 @@ function shoot() {
   let bullet = createSprite('bullet', x, y);
   bullets.push(bullet);
   drawSprite(bullet, '#77ff00', px - 3);
-  playLaserSound();
+  synthWithCrusher.triggerAttackRelease('C1', 0.05); // Play laser sound.
 }
 
 function invaderShoot(invader) {
@@ -521,10 +531,9 @@ function detectBulletAndInvaderCollision() {
 
         // Update invaders timer.
         timers.invaderSpeedTimer.interval -= timerStep;
-        initEnemiesTimer();
+        initInvadersTimer();
         if (!invaders.length) {
-          clearInterval(timers.invaderSpeedTimer.value);
-          setTimeout(() => alert('You Won!'), 500);
+          setTimeout(() => generateTheEnd(end.playerWins), 500);
         }
       }
     });
@@ -557,15 +566,7 @@ function detectBulletAndPlayerCollision() {
 
         // If dead.
         if (player.lives <= 0) {
-          // Clear timer.
-          clearInterval(timers.playerTimer.value);
-
-          polySynth.triggerAttackRelease('C1', 0.25);
-          // Play death frame.
-          player = updateSpriteTemplate(player, 'explosion_2');
-          ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth);
-          drawSprite(player, '#fc0d0d');
-          setTimeout(() => ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth), 750);
+          generateTheEnd(end.invadersWin);
           return;
         }
 
@@ -587,11 +588,46 @@ function generatePlayerLifeIcons() {
   for (let i = 0; i < 3; i++) {
     let img = document.createElement('img');
     img.classList.add('icon--life')
-    img.width = 50;
-    img.height = 50;
     nodes.push(img);
   }
   statsContent.append(...nodes);
+}
+
+function generateTheEnd(playerWins) {
+  hasGameEnded = true;
+
+  if (playerWins) {
+    // Clear timer.
+    clearInterval(timers.invaderSpeedTimer.value);
+
+    // Ending words.
+    ctx.clearRect(0, 0, canvas.width, 160);
+    ctx.font = 'bold 60px Arial';
+    ctx.fillStyle = 'green';
+    ctx.textAlign = 'center';
+    ctx.fillText('YOU WIN', canvas.width/2, canvas.height - (canvas.height - 60));
+  } else if (!playerWins) {
+    // Clear timer.
+    clearInterval(timers.playerTimer.value);
+    invadersStep = 0; // Remove step length so invaders would stay up.
+
+
+    // Play death explsion.
+    polySynth.triggerAttackRelease('C1', 0.25);
+
+    // Play death frame.
+    player = updateSpriteTemplate(player, 'explosion_2');
+    ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth);
+    drawSprite(player, '#fc0d0d');
+    setTimeout(() => ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth), 750);
+
+    // Ending words.
+    ctx.clearRect(0, 0, canvas.width, 160);
+    ctx.font = 'bold 60px Arial';
+    ctx.fillStyle = 'red';
+    ctx.textAlign = 'center';
+    ctx.fillText('INVADERS WIN', canvas.width/2, canvas.height - (canvas.height - 60));
+  }
 }
 
 function removePlayerLifeIcon() {
@@ -600,10 +636,6 @@ function removePlayerLifeIcon() {
   if (icons.length > 0) {
     icons[0].remove()
   }
-}
-
-function playLaserSound() {
-  synthWithCrusher.triggerAttackRelease('C1', 0.05);
 }
 
 function playStepSound() {
