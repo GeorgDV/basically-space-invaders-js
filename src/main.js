@@ -8,17 +8,22 @@ let canvas;
 import * as Tone from 'tone';
 import StartAudioContext from 'startaudiocontext';
 let crusher = new Tone.BitCrusher(6).toDestination();
+let crusher2 = new Tone.BitCrusher(1).toDestination();
+let distortion = new Tone.Distortion(1).toDestination();
 let synthWithCrusher = new Tone.Synth().connect(crusher).toDestination();
+let synthWithCrusher2 = new Tone.Synth().connect(crusher2).connect(distortion).toDestination();
 let synth = new Tone.Synth().toDestination();
+let polySynth = new Tone.PolySynth().connect(distortion);
 
 
 // Templates from creating sprites.
 const templates = require('./templates.json');
 
-let player = {}; // Player "sprite" object.
-let bullets = []; // Player bullet "sprite" objects.
-let invaders = []; // Invaders "sprites" objects.
-let invaderBullets = []; // Invader bullet "sprite" objects.
+let player = {}; // Player 'sprite' object.
+let isPlayerInCooldown = false; // Player hit cooldown after getting hit.
+let bullets = []; // Player bullet 'sprite' objects.
+let invaders = []; // Invaders 'sprites' objects.
+let invaderBullets = []; // Invader bullet 'sprite' objects.
 let invaderRows; // Number of ROWS of invaders. (scalable)
 let invaderCols; // Number of COLUMNS of invaders. (scalable)
 let invadersFront = [] // Front line of invaders (shooting invaders).
@@ -27,7 +32,7 @@ let invadersFront = [] // Front line of invaders (shooting invaders).
 let hasGameStarted = false;
 let ID = 0; // Id increment for ingame objects.
 
-const px = 5; // Size a single "pixel".
+const px = 5; // Size a single 'pixel'.
 const spriteWidth = px * 9; // Width of a default model sprite. (pixel * 9)
 const spriteHeigth = px * 7; // Height of a default  model sprite. (pixel * 7)
 
@@ -64,23 +69,23 @@ window.addEventListener('keydown', (event) => {
   handleKeyDown(event);
 });
 
+window.onload = () => {
+  initCanvas();
+  initAudio();
+
+  // Welcome text.
+  ctx.font = '24px Arial';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'center';
+  ctx.fillText('Click To Start', canvas.width/2, canvas.height/2);
+};
+
 window.addEventListener('click', () => {
   if (hasGameStarted) return;
   StartAudioContext(Tone.getContext());
   initGame();
   hasGameStarted = true;
 });
-
-window.onload = () => {
-  initCanvas();
-  initAudio();
-  
-  // Welcome text.
-  ctx.font = "40px Arial";
-  ctx.fillStyle = "white";
-  ctx.textAlign = "center";
-  ctx.fillText("Click To Start", canvas.width/2, canvas.height/2);
-};
 
 function initGame() {
   ctx.clearRect(0,0, canvas.width, canvas.height);
@@ -95,10 +100,15 @@ function initGame() {
 
 function initCanvas() {
   canvas = document.querySelector('#canvas');
+  let statsBar = document.querySelector('.stats');
   ctx = canvas.getContext('2d');
   //canvas.width = window.innerWidth;
   canvas.width = 900;
   canvas.height = window.innerHeight - 5;
+
+  statsBar.style.height = canvas.height;
+
+  generatePlayerLifeIcons();
 }
 
 function initAudio() {
@@ -221,7 +231,7 @@ function initInvaders() {
 function initPlayer() {
   let y = canvas.height - (spriteHeigth + padding);
   let x = padding;
-  player = createSprite('player', x, y);
+  player = { ...createSprite('player', x, y), lives: 3 };
   drawSprite(player, '#008a2e');
 }
 
@@ -241,13 +251,17 @@ function initPlayerTimer() {
       detectBulletAndInvaderCollision();
       updateBullets();
     }
+
+    if (player.lives <= 0) {
+      clearInterval(timers.playerTimer.value);
+    }
   }, timers.playerTimer.interval);
 }
 
 function initInvaderBulletTimer() {
   timers.invaderBulletTimer.value = setInterval(() => {
     // Choose if to shoot or not.
-    let random = getRandomInteger(1, invaders.length === 1 ? 8 : 24);
+    let random = getRandomInteger(1, invaders.length === 1 ? 6 : 24);
     if (random === 1) {
       // Get random front line invader to shoot.
       let index = Math.floor(Math.random() * invadersFront.length);
@@ -255,6 +269,7 @@ function initInvaderBulletTimer() {
     }
     
     if (invaderBullets.length > 0) {
+      detectBulletAndPlayerCollision();
       updateInvaderBullets();
     }
   }, timers.invaderBulletTimer.interval);
@@ -263,14 +278,14 @@ function initInvaderBulletTimer() {
 function updateInvaderBullets() {
   invaderBullets.forEach((bullet) => {
     ctx.clearRect(bullet.x - px, bullet.y - px, px*2, px*2);
-    //bullet.x += Math.cos(deg2rad(bullet.angle))*6; // Uncomment this when there is horizonal movement.
+    bullet.x += Math.cos(deg2rad(bullet.angle))*6;
     bullet.y += Math.sin(deg2rad(bullet.angle))*6;
 
     // Bullet hits wall.
     if (bullet.y > canvas.height) {
       invaderBullets = invaderBullets.filter((item) => item.id !== bullet.id);
     } else {
-      drawArc(bullet, px - 2, '#dddddd');
+      drawArc(bullet, px - 2);
     }
   });
 }
@@ -378,9 +393,9 @@ function updateInvaders() {
 }
 
 function updatePlayer() {
-  movePlayer()
+  movePlayer();
   ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth);
-  drawSprite(player, '#008a2e');
+  drawSprite(player, isPlayerInCooldown ? '#014718' : '#008a2e');
 }
 
 function handleKeyDown(event) {
@@ -439,7 +454,7 @@ function invaderShoot(invader) {
   // bullet.angle = rad2deg(angleRad) + 90;
 
   invaderBullets.push(bullet);
-  drawArc(bullet, px - 2, '#dddddd');
+  drawArc(bullet, px - 2);
 }
 
 function updateBullets() {
@@ -494,7 +509,7 @@ function detectBulletAndInvaderCollision() {
         bullets = bullets.filter((item) => item.id !== bullet.id);
 
         // Remove invader and play explosion.
-        invader = updateSpriteTemplate(invader, 'explosion');
+        invader = updateSpriteTemplate(invader, 'explosion_1');
         ctx.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px);
         drawSprite(invader, '#ffffff', px - 2, px - 2);
         invaders = invaders.filter((item) => item.id !== invader.id);
@@ -516,15 +531,86 @@ function detectBulletAndInvaderCollision() {
   });
 }
 
+function detectBulletAndPlayerCollision() {
+  if (!invaderBullets.length || !player || player.lives === 0) {
+    return;
+  }
+
+  let playerTopY = player.y.start;
+  let playerLeftX = player.x.start;
+  let playerRightX = player.x.start + spriteWidth;
+
+  invaderBullets.forEach((bullet) => {
+    // Detect collision. 
+    if (bullet.x <= playerRightX &&
+      bullet.x >= playerLeftX &&
+      bullet.y >= playerTopY) {
+
+      // Remove bullet.
+      ctx.clearRect(bullet.x - px, bullet.y - px, px*2, px*2);
+      invaderBullets = invaderBullets.filter((item) => item.id !== bullet.id);
+
+      if (!isPlayerInCooldown) {
+        // Remove 1 player life.
+        removePlayerLifeIcon();
+        player.lives -= 1;
+
+        // If dead.
+        if (player.lives <= 0) {
+          // Clear timer.
+          clearInterval(timers.playerTimer.value);
+
+          polySynth.triggerAttackRelease('C1', 0.25);
+          // Play death frame.
+          player = updateSpriteTemplate(player, 'explosion_2');
+          ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth);
+          drawSprite(player, '#fc0d0d');
+          setTimeout(() => ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth), 750);
+          return;
+        }
+
+        // Play hit sound.
+        synthWithCrusher2.triggerAttackRelease('C1', 0.1);
+
+        // Set cooldown.
+        isPlayerInCooldown = true;
+        setTimeout(() => isPlayerInCooldown = false, 1000);
+      }
+
+    }
+  });
+}
+
+function generatePlayerLifeIcons() {
+  let statsContent = document.querySelector('.stats-content');
+  let nodes = [];
+  for (let i = 0; i < 3; i++) {
+    let img = document.createElement('img');
+    img.classList.add('icon--life')
+    img.width = 50;
+    img.height = 50;
+    nodes.push(img);
+  }
+  statsContent.append(...nodes);
+}
+
+function removePlayerLifeIcon() {
+  // Remove first element from icons list.
+  let icons = document.querySelectorAll('.icon--life');
+  if (icons.length > 0) {
+    icons[0].remove()
+  }
+}
+
 function playLaserSound() {
-  synthWithCrusher.triggerAttackRelease("C1", 0.05);
+  synthWithCrusher.triggerAttackRelease('C1', 0.05);
 }
 
 function playStepSound() {
   if (invadersStepsCount % 2 === 0) {
-    synth.triggerAttackRelease("C3", 0.05);
+    synth.triggerAttackRelease('C3', 0.05);
   } else if (invadersStepsCount % 2 > 0) {
-    synth.triggerAttackRelease("C2", 0.05);
+    synth.triggerAttackRelease('C2', 0.05);
   }
 }
 
