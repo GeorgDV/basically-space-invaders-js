@@ -617,6 +617,8 @@ function generateTheEnd(playerWins) {
     ctx.textAlign = 'center';
     ctx.fillText('YOU WIN', canvas.width/2, canvas.height - (canvas.height - 60));
   } else if (!playerWins) {
+    invadersStep = 0;
+
     // Play death explsion.
     polySynth.triggerAttackRelease('C1', 0.25);
 
