@@ -42,7 +42,7 @@ const padding = 20; // Space from the edge of the canvas.
 let timers = {
   invaderSpeedTimer: {
     value: null,
-    interval: 700,
+    interval: 180,
   },
   playerTimer: {
     value: null,
@@ -221,7 +221,7 @@ function initInvaders() {
     for (let col = 0; col < invaderCols; col++) {
       //  width or length + (margin) * X/Y postition + padding from edge.
       let x = (spriteWidth + px * 3) * col + padding;
-      let y = (spriteHeigth + px * 3) * row + padding / 2;
+      let y = (spriteHeigth + px * 3) * row + (padding * 3);
       let invader = createSprite(id, x, y);
       invaders.push(invader);
       drawSprite(invader);
@@ -242,6 +242,10 @@ function initPlayer() {
 }
 
 function initInvadersTimer() {
+  if (timers.invaderSpeedTimer.value !== null) {
+    clearInterval(timers.invaderSpeedTimer.value);
+  }
+
   timers.invaderSpeedTimer.value = setInterval(() => {
     updateMoveDirection();
     updateInvaders();
@@ -249,25 +253,31 @@ function initInvadersTimer() {
 }
 
 function initPlayerTimer() {
+  if (timers.playerTimer.value !== null) {
+    clearInterval(timers.playerTimer.value);
+  }
+
   timers.playerTimer.value = setInterval(() => {
-    updatePlayer();
+    if (player.lives > 0) {
+      updatePlayer();
+    }
 
     // Control bullets fired by player.
     if (bullets.length > 0) {
       detectBulletAndInvaderCollision();
       updateBullets();
     }
-
-    if (player.lives <= 0) {
-      clearInterval(timers.playerTimer.value);
-    }
   }, timers.playerTimer.interval);
 }
 
 function initInvaderBulletTimer() {
+  if (timers.invaderBulletTimer.value !== null) {
+    clearInterval(timers.invaderBulletTimer.value);
+  }
+
   timers.invaderBulletTimer.value = setInterval(() => {
     // Choose if to shoot or not.
-    let random = getRandomInteger(1, invaders.length === 1 ? 6 : 24);
+    let random = getRandomInteger(1, invaders.length === 1 ? 8 : 24);
     if (random === 1 && invadersFront.length > 0) {
       // Get random front line invader to shoot.
       let index = Math.floor(Math.random() * invadersFront.length);
@@ -422,7 +432,7 @@ function handleKeyDown(event) {
       }
       isShootKeyPressed = true;
       shoot();
-      setTimeout(() => isShootKeyPressed = false, 400);
+      setTimeout(() => isShootKeyPressed = false, 500);
       break;
   }
 }
@@ -491,7 +501,7 @@ function updateBullets() {
 }
 
 function detectBulletAndInvaderCollision() {
-  if (!bullets.length || !invaders.length) {
+  if (!bullets.length || !invaders.length || hasGameEnded) {
     return;
   }
 
@@ -526,13 +536,16 @@ function detectBulletAndInvaderCollision() {
         // Clear explosion.
         setTimeout(() => ctx.clearRect(invader.x.start, invader.y.start - px, spriteWidth, spriteHeigth + px), 75);
 
-        // Step to decrease timer = 600 / number of invaders
-        let timerStep = Math.floor((timers.invaderSpeedTimer.interval - 100) / (invaders.length));
+        // Step to decrease timer after each invader kill = 600 / number of invaders
+        let timerStep = Math.floor((timers.invaderSpeedTimer.interval - 12) / (invaders.length));
 
         // Update invaders timer.
+        invaders.length === 1 ?
+        timers.invaderSpeedTimer.interval = 6 :
         timers.invaderSpeedTimer.interval -= timerStep;
         initInvadersTimer();
-        if (!invaders.length) {
+
+        if (invaders.length <= 0) {
           setTimeout(() => generateTheEnd(end.playerWins), 500);
         }
       }
@@ -597,21 +610,13 @@ function generateTheEnd(playerWins) {
   hasGameEnded = true;
 
   if (playerWins) {
-    // Clear timer.
-    clearInterval(timers.invaderSpeedTimer.value);
-
     // Ending words.
-    ctx.clearRect(0, 0, canvas.width, 160);
+    ctx.clearRect(0, 0, canvas.width, 80);
     ctx.font = 'bold 60px Arial';
     ctx.fillStyle = 'green';
     ctx.textAlign = 'center';
     ctx.fillText('YOU WIN', canvas.width/2, canvas.height - (canvas.height - 60));
   } else if (!playerWins) {
-    // Clear timer.
-    clearInterval(timers.playerTimer.value);
-    invadersStep = 0; // Remove step length so invaders would stay up.
-
-
     // Play death explsion.
     polySynth.triggerAttackRelease('C1', 0.25);
 
@@ -622,7 +627,7 @@ function generateTheEnd(playerWins) {
     setTimeout(() => ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth), 750);
 
     // Ending words.
-    ctx.clearRect(0, 0, canvas.width, 160);
+    ctx.clearRect(0, 0, canvas.width, 80);
     ctx.font = 'bold 60px Arial';
     ctx.fillStyle = 'red';
     ctx.textAlign = 'center';
