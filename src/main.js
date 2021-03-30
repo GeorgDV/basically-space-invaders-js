@@ -1,8 +1,9 @@
 import 'regenerator-runtime/runtime';
 
 // Canvas variables.
-let ctx;
 let canvas;
+let ctx;
+
 
 // Sound generation things.
 import * as Tone from 'tone';
@@ -19,16 +20,20 @@ let polySynth = new Tone.PolySynth().connect(distortion);
 // Templates from creating sprites.
 const templates = require('./templates.json');
 
-let player = {}; // Player 'sprite' object.
+// In-Game variables.
+let player = {}; // Player object.
 let isPlayerInCooldown = false; // Player hit cooldown after getting hit.
-let bullets = []; // Player bullet 'sprite' objects.
-let invaders = []; // Invaders 'sprites' objects.
-let invaderBullets = []; // Invader bullet 'sprite' objects.
-let invaderRows; // Number of ROWS of invaders. (scalable)
-let invaderCols; // Number of COLUMNS of invaders. (scalable)
+
+let playerBullets = []; // Player bullet objects.
+let invaderBullets = []; // Invader bullet objects.
+
+let invaders = []; // Invader objects.
 let invadersFront = [] // Front line of invaders (shooting invaders).
 
-// Game variables.
+let invaderRows; // Number of ROWS of invaders. (scalable)
+let invaderCols; // Number of COLUMNS of invaders. (scalable)
+
+
 let hasGameStarted = false;
 let ID = 0; // Id increment for ingame objects.
 
@@ -37,6 +42,7 @@ const spriteWidth = px * 9; // Width of a default model sprite. (pixel * 9)
 const spriteHeigth = px * 7; // Height of a default  model sprite. (pixel * 7)
 
 const padding = 20; // Space from the edge of the canvas.
+
 
 // Timer objects.
 let timers = {
@@ -58,14 +64,16 @@ let timers = {
   },
 }
 
+
 // Move direction enum.
 const direction = {
   LEFT: 'left',
   RIGHT: 'right',
 }
+
 let invadersMoveDirection = direction.RIGHT; // By default invaders move right at the beginning.
-let invadersStep = px * 3;
-let invadersStepsCount = 0;
+let invadersStep = px * 3; // Length of a single invaders DOWN step.
+let invadersStepsCount = 0; // How many steps have been made.
 
 let hasGameEnded = false;
 const end = {
@@ -73,15 +81,17 @@ const end = {
   invadersWin: false,
 }
 
-// Keypress handling things.
+
+// Keypress handling variables.
 let pressedKeys = [];
 let isShootKeyPressed = false;
-onkeydown = onkeyup = (event) => {
-  if (!hasGameStarted) return;
-  pressedKeys[event.keyCode] = event.type == 'keydown';
-}
 
-window.onload = () => {
+
+
+
+////
+// EVENT LISTENERS
+onload = () => {
   initCanvas();
   initAudio();
 
@@ -92,49 +102,25 @@ window.onload = () => {
   ctx.fillText('Click To Start', canvas.width/2, canvas.height/2);
 };
 
-window.addEventListener('click', () => {
+onkeydown = onkeyup = (event) => {
+  if (!hasGameStarted) return;
+  pressedKeys[event.keyCode] = event.type == 'keydown';
+}
+
+onclick = () => {
   if (hasGameStarted) return;
   StartAudioContext(Tone.getContext());
   initGame();
   hasGameStarted = true;
-});
-
-function initGame() {
-  ctx.clearRect(0,0, canvas.width, canvas.height);
-
-  initInvaders();
-  initPlayer();
-
-  initKeyHandlerTimer();
-  initInvadersTimer();
-  initPlayerTimer();
-  setTimeout(() => initInvaderBulletTimer(), 3000);
 }
 
-function initCanvas() {
-  canvas = document.querySelector('#canvas');
-  let statsBar = document.querySelector('.stats');
-  ctx = canvas.getContext('2d');
-  //canvas.width = window.innerWidth;
-  canvas.width = 900;
-  canvas.height = window.innerHeight - 5;
 
-  statsBar.style.height = canvas.height;
 
-  generatePlayerLifeIcons();
-}
 
-function initAudio() {
-  let audioContext = new Tone.Context();
-  Tone.setContext(audioContext);
-}
 
-function initKeyHandlerTimer() {
-  timers.keyHandlerTimer.value = setInterval(() => {
-    handleKeyPress();
-  }, timers.keyHandlerTimer.interval);
-}
 
+////
+// SPRITE MANAGEMENT
 // Used for creating sprite objects.
 function createSprite(id, startX, startY) {
   let template = templates.find((template) => template.id === id);
@@ -159,20 +145,7 @@ function createSprite(id, startX, startY) {
   }
 }
 
-// Used for creating arc objects.
-function createArc(x, y) {
-  return {
-    id: ID++,
-    template: {
-      id: 'arc',
-      data: null,
-    },
-    x: x,
-    y: y,
-    angle: 90, // Default value 180 degrees.
-  }
-}
-
+// Updates existing sprite's template.
 function updateSpriteTemplate(oldSprite, newTemplateId) {
   let template = templates.find((template) => template.id === newTemplateId);
   if (!template) {
@@ -185,6 +158,20 @@ function updateSpriteTemplate(oldSprite, newTemplateId) {
       id: newTemplateId,
       data: template.data,
     },
+  }
+}
+
+// Used for creating arc objects.
+function createArc(x, y) {
+  return {
+    id: ID++,
+    template: {
+      id: 'arc',
+      data: null,
+    },
+    x: x,
+    y: y,
+    angle: 90, // Default value 180 degrees.
   }
 }
 
@@ -214,6 +201,43 @@ function drawArc(arc, radius, fillStyle) {
   ctx.fillStyle = fillStyle ? fillStyle : '#ffffff';
   ctx.fill();
   ctx.closePath();
+}
+
+
+
+
+
+
+////
+// INITALIZING FUNCTIONS
+function initGame() {
+  ctx.clearRect(0,0, canvas.width, canvas.height);
+
+  initInvaders();
+  initPlayer();
+
+  initKeyHandlerTimer();
+  initInvadersTimer();
+  initPlayerTimer();
+  setTimeout(() => initInvaderBulletTimer(), 3000);
+}
+
+function initCanvas() {
+  canvas = document.querySelector('#canvas');
+  let statsBar = document.querySelector('.stats');
+  ctx = canvas.getContext('2d');
+  //canvas.width = window.innerWidth;
+  canvas.width = 900;
+  canvas.height = window.innerHeight - 5;
+
+  statsBar.style.height = canvas.height;
+
+  generatePlayerLifeIcons();
+}
+
+function initAudio() {
+  let audioContext = new Tone.Context();
+  Tone.setContext(audioContext);
 }
 
 function initInvaders() {
@@ -260,7 +284,7 @@ function initInvadersTimer() {
   }
 
   timers.invaderSpeedTimer.value = setInterval(() => {
-    updateMoveDirection();
+    updateInvadersMoveDirection();
     updateInvaders();
   }, timers.invaderSpeedTimer.interval);
 }
@@ -276,9 +300,9 @@ function initPlayerTimer() {
     }
 
     // Control bullets fired by player.
-    if (bullets.length > 0) {
+    if (playerBullets.length > 0) {
       detectBulletAndInvaderCollision();
-      updateBullets();
+      updatePlayerBullets();
     }
   }, timers.playerTimer.interval);
 }
@@ -304,73 +328,68 @@ function initInvaderBulletTimer() {
   }, timers.invaderBulletTimer.interval);
 }
 
-function updateInvaderBullets() {
-  invaderBullets.forEach((bullet) => {
-    ctx.clearRect(bullet.x - px, bullet.y - px, px*2, px*2);
-    bullet.x += Math.cos(deg2rad(bullet.angle))*6;
-    bullet.y += Math.sin(deg2rad(bullet.angle))*6;
-
-    // Bullet hits wall.
-    if (bullet.y > canvas.height) {
-      invaderBullets = invaderBullets.filter((item) => item.id !== bullet.id);
-    } else {
-      drawArc(bullet, px - 2);
-    }
-  });
+function initKeyHandlerTimer() {
+  timers.keyHandlerTimer.value = setInterval(() => {
+    handleKeyPress();
+  }, timers.keyHandlerTimer.interval);
 }
 
-function updateInvadersFront(invaderToReplace) {
-  // If killed invader is not from front line, dont do anything.
-  if (!invadersFront.some((invader) => invader.id === invaderToReplace.id)) {
+
+
+////
+// IN-GAME FUNCTIONS
+// Player.
+function updatePlayer() {
+  movePlayer();
+  ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth);
+  drawSprite(player, isPlayerInCooldown ? '#014718' : '#008a2e');
+}
+
+function updatePlayerBullets() {
+  if (!playerBullets.length) {
     return;
   }
 
-  // Remove killed invader from front line.
-  invadersFront = invadersFront.filter((invader) => invader.id !== invaderToReplace.id)
-  
-  // Find replacement invader from previous line.
-  let index = invaderToReplace.id - invaderCols;
-  for (let i = index; i >= invaders[0].id; i -= invaderCols) {
-    // Stepping back line after line. If there is any invader
-    // from previous lines, it gets replaced by that.
-    let invaderBehind = invaders.find((invader) => invader.id === i)
-    if (invaderBehind) {
-      invadersFront.push(invaderBehind);
-      return;
+  playerBullets.forEach((bullet) => {
+    bullet.y.start -= 10;
+    ctx.clearRect(bullet.x.start, bullet.y.start, px - 3, px * 6);
+
+    // Bullet hits wall.
+    if (bullet.y.start < 0) {
+      bullet = updateSpriteTemplate(bullet, 'bullet_hit_wall_1');
+      bullet.x.start -= (px * 5) - (px * 3); // Move new sprite to middle of bullet hit.
+      bullet.x.current = bullet.x.start;
+      drawSprite(bullet, '#c0ff8a', px - 3, px - 3);
+      playerBullets = playerBullets.filter((item) => item.id !== bullet.id);
+      setTimeout(() => ctx.clearRect(bullet.x.start, bullet.y.start + px * 2, px * 5, px * 2), 150);
+    } else {
+      drawSprite(bullet, '#77ff00', px - 3);
     }
+  });
+}
+
+function movePlayer() {
+  switch (player.moveDirection) {
+    case direction.LEFT:
+      if (player.x.start < (0 + padding)) {
+        return;
+      }
+      player.x.start -= 3;
+      player.x.current -= 3;
+      break;
+    case direction.RIGHT:
+      if (player.x.start > (canvas.width - spriteWidth - padding)) {
+        return;
+      }
+      player.x.start += 3;
+      player.x.current += 3;
+      break;
   }
 }
 
-function updateMoveDirection() {
-  let isDirectionChanging = false;
-  invaders.forEach((invader) => {
-    if (invader.x.start >= (canvas.width - spriteWidth - padding)) {
-      isDirectionChanging = true;
-      invadersMoveDirection = direction.LEFT;
-    } else if (invader.x.start <= (0 + padding)) {
-      isDirectionChanging = true;
-      invadersMoveDirection = direction.RIGHT;
-    }
 
-    if (invader.y.start > canvas.height - (spriteHeigth * 2) && !hasGameEnded) {
-      generateTheEnd(end.invadersWin);
-    }
-  });
 
-  if (isDirectionChanging) {
-    invadersStepDown();
-  }
-}
-
-function invadersStepDown() {
-  invadersStepsCount += 1;
-  invaders.forEach((invader) => {
-    invader.y.start += invadersStep;
-    invader.y.current = invader.y.start;
-  });
-  playStepSound();
-}
-
+// Invaders.
 function updateInvaders() {
   invaders.forEach((invader) => {
     // Draw a rectangle to clear each sprite's previous frame individually.
@@ -425,52 +444,75 @@ function updateInvaders() {
   });
 }
 
-function updatePlayer() {
-  movePlayer();
-  ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth);
-  drawSprite(player, isPlayerInCooldown ? '#014718' : '#008a2e');
+function updateInvaderBullets() {
+  invaderBullets.forEach((bullet) => {
+    ctx.clearRect(bullet.x - px, bullet.y - px, px*2, px*2);
+    bullet.x += Math.cos(deg2rad(bullet.angle))*6;
+    bullet.y += Math.sin(deg2rad(bullet.angle))*6;
+
+    // Bullet hits wall.
+    if (bullet.y > canvas.height) {
+      invaderBullets = invaderBullets.filter((item) => item.id !== bullet.id);
+    } else {
+      drawArc(bullet, px - 2);
+    }
+  });
 }
 
-function handleKeyPress() {
-  if (pressedKeys[37]) {
-    player.moveDirection = direction.LEFT;
-  } else if (pressedKeys[39]) {
-    player.moveDirection = direction.RIGHT;
+function updateInvadersFront(invaderToReplace) {
+  // If killed invader is not from front line, dont do anything.
+  if (!invadersFront.some((invader) => invader.id === invaderToReplace.id)) {
+    return;
   }
 
-  if (pressedKeys[32] && !isShootKeyPressed) {
-    isShootKeyPressed = true;
-    shoot();
-    setTimeout(() => isShootKeyPressed = false, 600);
-  }
-}
-
-function movePlayer() {
-  switch (player.moveDirection) {
-    case direction.LEFT:
-      if (player.x.start < (0 + padding)) {
-        return;
-      }
-      player.x.start -= 3;
-      player.x.current -= 3;
-      break;
-    case direction.RIGHT:
-      if (player.x.start > (canvas.width - spriteWidth - padding)) {
-        return;
-      }
-      player.x.start += 3;
-      player.x.current += 3;
-      break;
+  // Remove killed invader from front line.
+  invadersFront = invadersFront.filter((invader) => invader.id !== invaderToReplace.id)
+  
+  // Find replacement invader from previous line.
+  let index = invaderToReplace.id - invaderCols;
+  for (let i = index; i >= invaders[0].id; i -= invaderCols) {
+    // Stepping back line after line. If there is any invader
+    // from previous lines, it gets replaced by that.
+    let invaderBehind = invaders.find((invader) => invader.id === i)
+    if (invaderBehind) {
+      invadersFront.push(invaderBehind);
+      return;
+    }
   }
 }
 
-function shoot() {
-  let x = player.x.start + Math.floor(spriteWidth / 2 - 2);
-  let y = player.y.start - Math.floor(spriteHeigth / 2);
-  let bullet = createSprite('bullet', x, y);
-  bullets.push(bullet);
-  drawSprite(bullet, '#77ff00', px - 3);
-  synthWithCrusher.triggerAttackRelease('C1', 0.05); // Play laser sound.
+function updateInvadersMoveDirection() {
+  let isDirectionChanging = false;
+  invaders.forEach((invader) => {
+    if (invader.x.start >= (canvas.width - spriteWidth - padding)) {
+      isDirectionChanging = true;
+      invadersMoveDirection = direction.LEFT;
+    } else if (invader.x.start <= (0 + padding)) {
+      isDirectionChanging = true;
+      invadersMoveDirection = direction.RIGHT;
+    }
+
+    if (invader.y.start > canvas.height - (spriteHeigth * 2) && !hasGameEnded) {
+      endGame(end.invadersWin);
+    }
+  });
+
+  if (isDirectionChanging) {
+    invadersStepDown();
+  }
+}
+
+function invadersStepDown() {
+  invadersStepsCount += 1;
+  invaders.forEach((invader) => {
+    invader.y.start += invadersStep;
+    invader.y.current = invader.y.start;
+  });
+
+  // Play step sound.
+  invadersStepsCount % 2 === 0 ?
+  synth.triggerAttackRelease('C3', 0.05) :
+  synth.triggerAttackRelease('C2', 0.05);
 }
 
 function invaderShoot(invader) {
@@ -488,36 +530,76 @@ function invaderShoot(invader) {
   drawArc(bullet, px - 2);
 }
 
-function updateBullets() {
-  if (!bullets.length) {
-    return;
+
+
+// End Game.
+function endGame(playerWins) {
+  hasGameEnded = true;
+
+  if (playerWins) {
+    // Ending words.
+    ctx.clearRect(0, 0, canvas.width, 80);
+    ctx.font = 'bold 60px Arial';
+    ctx.fillStyle = 'green';
+    ctx.textAlign = 'center';
+    ctx.fillText('YOU WIN', canvas.width/2, canvas.height - (canvas.height - 60));
+  } else if (!playerWins) {
+    invadersStep = 0;
+
+    // Play death explsion.
+    polySynth.triggerAttackRelease('C1', 0.25);
+
+    // Play death frame.
+    player = updateSpriteTemplate(player, 'explosion_2');
+    ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth);
+    drawSprite(player, '#fc0d0d');
+    setTimeout(() => ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth), 750);
+
+    // Ending words.
+    ctx.clearRect(0, 0, canvas.width, 80);
+    ctx.font = 'bold 60px Arial';
+    ctx.fillStyle = 'red';
+    ctx.textAlign = 'center';
+    ctx.fillText('INVADERS WIN', canvas.width/2, canvas.height - (canvas.height - 60));
   }
-
-  bullets.forEach((bullet) => {
-    bullet.y.start -= 10;
-    ctx.clearRect(bullet.x.start, bullet.y.start, px - 3, px * 6);
-
-    // Bullet hits wall.
-    if (bullet.y.start < 0) {
-      bullet = updateSpriteTemplate(bullet, 'bullet_hit_wall_1');
-      bullet.x.start -= (px * 5) - (px * 3); // Move new sprite to middle of bullet hit.
-      bullet.x.current = bullet.x.start;
-      drawSprite(bullet, '#c0ff8a', px - 3, px - 3);
-      bullets = bullets.filter((item) => item.id !== bullet.id);
-      setTimeout(() => ctx.clearRect(bullet.x.start, bullet.y.start + px * 2, px * 5, px * 2), 150);
-    } else {
-      drawSprite(bullet, '#77ff00', px - 3);
-    }
-  });
 }
 
+
+
+// Keypress handling.
+function handleKeyPress() {
+  if (pressedKeys[37]) {
+    player.moveDirection = direction.LEFT;
+  } else if (pressedKeys[39]) {
+    player.moveDirection = direction.RIGHT;
+  }
+
+  if (pressedKeys[32] && !isShootKeyPressed) {
+    isShootKeyPressed = true;
+    playerShoot();
+    setTimeout(() => isShootKeyPressed = false, 600);
+  }
+}
+
+function playerShoot() {
+  let x = player.x.start + Math.floor(spriteWidth / 2 - 2);
+  let y = player.y.start - Math.floor(spriteHeigth / 2);
+  let bullet = createSprite('bullet', x, y);
+  playerBullets.push(bullet);
+  drawSprite(bullet, '#77ff00', px - 3);
+  synthWithCrusher.triggerAttackRelease('C1', 0.05); // Play laser sound.
+}
+
+
+
+// Collision handlers.
 function detectBulletAndInvaderCollision() {
-  if (!bullets.length || !invaders.length || hasGameEnded) {
+  if (!playerBullets.length || !invaders.length || hasGameEnded) {
     return;
   }
 
   invaders.forEach((invader) => {
-    bullets.forEach((bullet) => {
+    playerBullets.forEach((bullet) => {
       let bulletX = bullet.x.start;
       let bulletY = bullet.y.start;
 
@@ -537,7 +619,7 @@ function detectBulletAndInvaderCollision() {
 
         // Remove bullet.
         ctx.clearRect(bullet.x.start, bullet.y.start, px - 3, px * 4);
-        bullets = bullets.filter((item) => item.id !== bullet.id);
+        playerBullets = playerBullets.filter((item) => item.id !== bullet.id);
 
         // Remove invader and play explosion.
         invader = updateSpriteTemplate(invader, 'explosion_1');
@@ -557,7 +639,7 @@ function detectBulletAndInvaderCollision() {
         initInvadersTimer();
 
         if (invaders.length <= 0) {
-          setTimeout(() => generateTheEnd(end.playerWins), 500);
+          setTimeout(() => endGame(end.playerWins), 500);
         }
       }
     });
@@ -590,7 +672,7 @@ function detectBulletAndPlayerCollision() {
 
         // If dead.
         if (player.lives <= 0) {
-          generateTheEnd(end.invadersWin);
+          endGame(end.invadersWin);
           return;
         }
 
@@ -606,6 +688,9 @@ function detectBulletAndPlayerCollision() {
   });
 }
 
+
+
+// Player life icons handling.
 function generatePlayerLifeIcons() {
   let statsContent = document.querySelector('.stats-content');
   let nodes = [];
@@ -617,37 +702,6 @@ function generatePlayerLifeIcons() {
   statsContent.append(...nodes);
 }
 
-function generateTheEnd(playerWins) {
-  hasGameEnded = true;
-
-  if (playerWins) {
-    // Ending words.
-    ctx.clearRect(0, 0, canvas.width, 80);
-    ctx.font = 'bold 60px Arial';
-    ctx.fillStyle = 'green';
-    ctx.textAlign = 'center';
-    ctx.fillText('YOU WIN', canvas.width/2, canvas.height - (canvas.height - 60));
-  } else if (!playerWins) {
-    invadersStep = 0;
-
-    // Play death explsion.
-    polySynth.triggerAttackRelease('C1', 0.25);
-
-    // Play death frame.
-    player = updateSpriteTemplate(player, 'explosion_2');
-    ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth);
-    drawSprite(player, '#fc0d0d');
-    setTimeout(() => ctx.clearRect(player.x.start - px, player.y.start, spriteWidth + px * 2, spriteHeigth), 750);
-
-    // Ending words.
-    ctx.clearRect(0, 0, canvas.width, 80);
-    ctx.font = 'bold 60px Arial';
-    ctx.fillStyle = 'red';
-    ctx.textAlign = 'center';
-    ctx.fillText('INVADERS WIN', canvas.width/2, canvas.height - (canvas.height - 60));
-  }
-}
-
 function removePlayerLifeIcon() {
   // Remove first element from icons list.
   let icons = document.querySelectorAll('.icon--life');
@@ -656,18 +710,17 @@ function removePlayerLifeIcon() {
   }
 }
 
-function playStepSound() {
-  invadersStepsCount % 2 === 0 ?
-  synth.triggerAttackRelease('C3', 0.05) :
-  synth.triggerAttackRelease('C2', 0.05);
-}
 
+
+// Misc calulation functions.
 function deg2rad(deg) {
   return deg * (Math.PI / 180);
 }
+
 function rad2deg(rad) {
   return rad * (180/ Math.PI);
 }
+
 function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
