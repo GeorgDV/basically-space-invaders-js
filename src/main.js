@@ -107,8 +107,8 @@ onkeydown = onkeyup = (event) => {
   pressedKeys[event.keyCode] = event.type == 'keydown';
 }
 
-onclick = () => {
-  if (hasGameStarted) return;
+onclick = (event) => {
+  if (hasGameStarted || event.target.id !== 'canvas') return;
   StartAudioContext(Tone.getContext());
   initGame();
   hasGameStarted = true;
