@@ -156,10 +156,6 @@ function createSprite(id, startX, startY) {
       start: startY,
       current: startY,
     },
-    velocity: {
-      x: 0,
-      y: 0,
-    },
   }
 }
 
@@ -250,7 +246,11 @@ function initInvaders() {
 function initPlayer() {
   let y = canvas.height - (spriteHeigth + padding);
   let x = padding;
-  player = { ...createSprite('player', x, y), lives: 3 };
+  player = {
+    ...createSprite('player', x, y),
+    moveDirection: direction.RIGHT,
+    lives: 3,
+  };
   drawSprite(player, '#008a2e');
 }
 
@@ -433,9 +433,9 @@ function updatePlayer() {
 
 function handleKeyPress() {
   if (pressedKeys[37]) {
-    player.velocity.x = -1;
+    player.moveDirection = direction.LEFT;
   } else if (pressedKeys[39]) {
-    player.velocity.x = 1;
+    player.moveDirection = direction.RIGHT;
   }
 
   if (pressedKeys[32] && !isShootKeyPressed) {
@@ -446,18 +446,21 @@ function handleKeyPress() {
 }
 
 function movePlayer() {
-  if (player.velocity.x < 0) {
-    if (player.x.start < (0 + padding)) {
-      return;
-    }
-    player.x.start -= 3;
-    player.x.current -= 3;
-  } else if (player.velocity.x > 0) {
-    if (player.x.start > (canvas.width - spriteWidth - padding)) {
-      return;
-    }
-    player.x.start += 3;
-    player.x.current += 3;
+  switch (player.moveDirection) {
+    case direction.LEFT:
+      if (player.x.start < (0 + padding)) {
+        return;
+      }
+      player.x.start -= 3;
+      player.x.current -= 3;
+      break;
+    case direction.RIGHT:
+      if (player.x.start > (canvas.width - spriteWidth - padding)) {
+        return;
+      }
+      player.x.start += 3;
+      player.x.current += 3;
+      break;
   }
 }
 
@@ -475,7 +478,7 @@ function invaderShoot(invader) {
   let y = invader.y.start + spriteHeigth + (px * 3);
   let bullet = createArc(x, y);
 
-  // Calculate shooting angle. Not working 100% correctly atm.
+  // Attempt at calculating shooting angle towards player.
   // let a = player.x.start + (spriteWidth / 2) - bullet.x;
   // let b = player.y.start + (spriteHeigth / 2) - bullet.y;
   // let angleRad = Math.atan(Math.abs(a / b));
@@ -562,7 +565,7 @@ function detectBulletAndInvaderCollision() {
 }
 
 function detectBulletAndPlayerCollision() {
-  if (!invaderBullets.length || !player || player.lives === 0) {
+  if (!invaderBullets.length || !player || hasGameEnded) {
     return;
   }
 
@@ -654,11 +657,9 @@ function removePlayerLifeIcon() {
 }
 
 function playStepSound() {
-  if (invadersStepsCount % 2 === 0) {
-    synth.triggerAttackRelease('C3', 0.05);
-  } else if (invadersStepsCount % 2 > 0) {
-    synth.triggerAttackRelease('C2', 0.05);
-  }
+  invadersStepsCount % 2 === 0 ?
+  synth.triggerAttackRelease('C3', 0.05) :
+  synth.triggerAttackRelease('C2', 0.05);
 }
 
 function deg2rad(deg) {

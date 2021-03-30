@@ -11,17 +11,16 @@ body, html {
 .stats {
   position: relative;
   float: right;
-  width: 70px;
+  width: 4.375rem;
 }
 
 .stats-content {
   position: absolute;
   display: flex;
   flex-direction: column-reverse;
-  height: 150px;
-  width: 50px;
-  bottom: 10px;
-  right: 10px;
+  width: 3rem;
+  bottom: 0.625rem;
+  right: 0.625rem;
 }
 
 .icon--life {
@@ -33,4 +32,12 @@ body, html {
   display: flex;
   margin: 0 auto;
   width: fit-content;
+}
+
+#github-logo {
+  position: absolute;
+  content: url(./github_logo_light.png);
+  width: 2.5rem;
+  top: 0.75rem;
+  right: 0.75rem;
 }
