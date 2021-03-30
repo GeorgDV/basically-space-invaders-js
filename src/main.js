@@ -496,7 +496,8 @@ function updateInvadersMoveDirection() {
       invadersMoveDirection = direction.RIGHT;
     }
 
-    if (invader.y.start > canvas.height - (spriteHeigth * 2) && !hasGameEnded) {
+    if (invader.y.start > canvas.height - (spriteHeigth * 3) && !hasGameEnded) {
+      player.lives = 0;
       endGame(end.invadersWin);
     }
   });
@@ -643,7 +644,7 @@ function detectBulletAndInvaderCollision() {
         initInvadersTimer();
 
         if (invaders.length <= 0) {
-          setTimeout(() => endGame(end.playerWins), 500);
+          setTimeout(() => endGame(end.playerWins), 1000);
         }
       }
     });
