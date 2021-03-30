@@ -1,3 +1,8 @@
+@font-face {
+  font-family: FFF Forward;
+  src: url('./FFFFORWA.TTF');
+} 
+
 body, html {
   background-color: #000000;
   margin: 0;
@@ -6,6 +11,8 @@ body, html {
 
 #canvas {
   border: 1px solid white;
+  min-height: 300px;
+  max-width: 900px;
 }
 
 .stats {

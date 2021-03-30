@@ -20,7 +20,7 @@ let polySynth = new Tone.PolySynth().connect(distortion);
 // Templates for creating sprites.
 const templates = require('./templates.json');
 
-// Movement direction enum.
+// Movement directions.
 const direction = {
   LEFT: 'left',
   RIGHT: 'right',
@@ -32,7 +32,7 @@ const end = {
   invadersWin: false,
 }
 
-// Costant variables.
+// Constant variables.
 const px = 5; // Size of a single 'pixel'.
 const spriteWidth = px * 9; // Width of a default model sprite. (pixel * 9)
 const spriteHeigth = px * 7; // Height of a default  model sprite. (pixel * 7)
@@ -90,18 +90,23 @@ let isShootKeyPressed = false;
 
 
 
-
 ////////
 // EVENT LISTENERS
 onload = () => {
   initCanvas();
   initAudio();
 
-  // Welcome text.
-  ctx.font = '24px Arial';
-  ctx.fillStyle = 'white';
-  ctx.textAlign = 'center';
-  ctx.fillText('Click To Start', canvas.width/2, canvas.height/2);
+  // Wait for custom font to be loaded.
+  document.fonts.load('10pt "FFF Forward"').then(() => {
+    // Welcome text.
+    ctx.font = '50px FFF Forward';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'gray';
+    ctx.fillText('Space Invaders', canvas.width/2, canvas.height/3);
+    ctx.font = '24px FFF Forward';
+    ctx.fillStyle = 'white';
+    ctx.fillText('Click To Start', canvas.width/2, canvas.height/2);
+  });
 };
 
 onkeydown = onkeyup = (event) => {
@@ -173,7 +178,7 @@ function createArc(x, y) {
     },
     x: x,
     y: y,
-    angle: 90, // Default value 180 degrees.
+    angle: 90, // Default value 90 degrees.
   }
 }
 
@@ -544,7 +549,7 @@ function endGame(playerWins) {
   if (playerWins) {
     // Ending words.
     ctx.clearRect(0, 0, canvas.width, 80);
-    ctx.font = 'bold 60px Arial';
+    ctx.font = 'bold 40px FFF Forward';
     ctx.fillStyle = 'green';
     ctx.textAlign = 'center';
     ctx.fillText('YOU WIN', canvas.width/2, canvas.height - (canvas.height - 60));
@@ -562,7 +567,7 @@ function endGame(playerWins) {
 
     // Ending words.
     ctx.clearRect(0, 0, canvas.width, 80);
-    ctx.font = 'bold 60px Arial';
+    ctx.font = 'bold 40px FFF Forward';
     ctx.fillStyle = 'red';
     ctx.textAlign = 'center';
     ctx.fillText('INVADERS WIN', canvas.width/2, canvas.height - (canvas.height - 60));
