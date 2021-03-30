@@ -336,6 +336,8 @@ function initKeyHandlerTimer() {
 
 
 
+
+
 ////
 // IN-GAME FUNCTIONS
 // Player.
@@ -577,7 +579,7 @@ function handleKeyPress() {
   if (pressedKeys[32] && !isShootKeyPressed) {
     isShootKeyPressed = true;
     playerShoot();
-    setTimeout(() => isShootKeyPressed = false, 600);
+    setTimeout(() => isShootKeyPressed = false, hasGameEnded ? 100 : 650);
   }
 }
 
