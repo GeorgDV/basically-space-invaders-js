@@ -5,7 +5,7 @@ let canvas;
 let ctx;
 
 
-// Sound generation things.
+// Sound generation library components.
 import * as Tone from 'tone';
 import StartAudioContext from 'startaudiocontext';
 let crusher = new Tone.BitCrusher(6).toDestination();
@@ -17,8 +17,28 @@ let synth = new Tone.Synth().toDestination();
 let polySynth = new Tone.PolySynth().connect(distortion);
 
 
-// Templates from creating sprites.
+// Templates for creating sprites.
 const templates = require('./templates.json');
+
+// Movement direction enum.
+const direction = {
+  LEFT: 'left',
+  RIGHT: 'right',
+}
+
+// Game ending outcomes.
+const end = {
+  playerWins: true,
+  invadersWin: false,
+}
+
+// Costant variables.
+const px = 5; // Size of a single 'pixel'.
+const spriteWidth = px * 9; // Width of a default model sprite. (pixel * 9)
+const spriteHeigth = px * 7; // Height of a default  model sprite. (pixel * 7)
+
+const padding = 20; // Space from the edge of the canvas.
+
 
 // In-Game variables.
 let player = {}; // Player object.
@@ -30,29 +50,28 @@ let invaderBullets = []; // Invader bullet objects.
 let invaders = []; // Invader objects.
 let invadersFront = [] // Front line of invaders (shooting invaders).
 
-let invaderRows; // Number of ROWS of invaders. (scalable)
-let invaderCols; // Number of COLUMNS of invaders. (scalable)
+let invaderRows; // Number of ROWS of invaders.
+let invaderCols; // Number of COLUMNS of invaders.
+
+let invadersMoveDirection = direction.RIGHT; // By default invaders move right at the beginning.
+let invadersStep = px * 3; // Length of a single invaders DOWN step.
+let invadersStepsCount = 0; // How many steps have been made.
 
 
 let hasGameStarted = false;
+let hasGameEnded = false;
 let ID = 0; // Id increment for ingame objects.
-
-const px = 5; // Size a single 'pixel'.
-const spriteWidth = px * 9; // Width of a default model sprite. (pixel * 9)
-const spriteHeigth = px * 7; // Height of a default  model sprite. (pixel * 7)
-
-const padding = 20; // Space from the edge of the canvas.
 
 
 // Timer objects.
 let timers = {
-  invaderSpeedTimer: {
-    value: null,
-    interval: 180,
-  },
   playerTimer: {
     value: null,
     interval: 20,
+  },
+  invaderSpeedTimer: {
+    value: null,
+    interval: 180,
   },
   invaderBulletTimer: {
     value: null,
@@ -65,31 +84,14 @@ let timers = {
 }
 
 
-// Move direction enum.
-const direction = {
-  LEFT: 'left',
-  RIGHT: 'right',
-}
-
-let invadersMoveDirection = direction.RIGHT; // By default invaders move right at the beginning.
-let invadersStep = px * 3; // Length of a single invaders DOWN step.
-let invadersStepsCount = 0; // How many steps have been made.
-
-let hasGameEnded = false;
-const end = {
-  playerWins: true,
-  invadersWin: false,
-}
-
-
-// Keypress handling variables.
+// Keypress handler variables.
 let pressedKeys = [];
 let isShootKeyPressed = false;
 
 
 
 
-////
+////////
 // EVENT LISTENERS
 onload = () => {
   initCanvas();
@@ -119,7 +121,7 @@ onclick = (event) => {
 
 
 
-////
+////////
 // SPRITE MANAGEMENT
 // Used for creating sprite objects.
 function createSprite(id, startX, startY) {
@@ -208,7 +210,7 @@ function drawArc(arc, radius, fillStyle) {
 
 
 
-////
+////////
 // INITALIZING FUNCTIONS
 function initGame() {
   ctx.clearRect(0,0, canvas.width, canvas.height);
@@ -338,7 +340,7 @@ function initKeyHandlerTimer() {
 
 
 
-////
+////////
 // IN-GAME FUNCTIONS
 // Player.
 function updatePlayer() {
