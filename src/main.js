@@ -52,6 +52,10 @@ let timers = {
     value: null,
     interval: 30,
   },
+  keyHandlerTimer: {
+    value: null,
+    interval: 10,
+  },
 }
 
 // Move direction enum.
@@ -69,11 +73,13 @@ const end = {
   invadersWin: false,
 }
 
+// Keypress handling things.
+let pressedKeys = [];
 let isShootKeyPressed = false;
-window.addEventListener('keydown', (event) => {
+onkeydown = onkeyup = (event) => {
   if (!hasGameStarted) return;
-  handleKeyDown(event);
-});
+  pressedKeys[event.keyCode] = event.type == 'keydown';
+}
 
 window.onload = () => {
   initCanvas();
@@ -99,6 +105,7 @@ function initGame() {
   initInvaders();
   initPlayer();
 
+  initKeyHandlerTimer();
   initInvadersTimer();
   initPlayerTimer();
   setTimeout(() => initInvaderBulletTimer(), 3000);
@@ -120,6 +127,12 @@ function initCanvas() {
 function initAudio() {
   let audioContext = new Tone.Context();
   Tone.setContext(audioContext);
+}
+
+function initKeyHandlerTimer() {
+  timers.keyHandlerTimer.value = setInterval(() => {
+    handleKeyPress();
+  }, timers.keyHandlerTimer.interval);
 }
 
 // Used for creating sprite objects.
@@ -418,22 +431,17 @@ function updatePlayer() {
   drawSprite(player, isPlayerInCooldown ? '#014718' : '#008a2e');
 }
 
-function handleKeyDown(event) {
-  switch(event.keyCode) {
-    case 37: //LEFT arrow. 
-      player.velocity.x = -1;
-      break;
-    case 39: //RIGHT arrow.
-      player.velocity.x = 1;
-      break;
-    case 32: //SPACEBAR.
-      if (isShootKeyPressed) {
-        return;
-      }
-      isShootKeyPressed = true;
-      shoot();
-      setTimeout(() => isShootKeyPressed = false, 500);
-      break;
+function handleKeyPress() {
+  if (pressedKeys[37]) {
+    player.velocity.x = -1;
+  } else if (pressedKeys[39]) {
+    player.velocity.x = 1;
+  }
+
+  if (pressedKeys[32] && !isShootKeyPressed) {
+    isShootKeyPressed = true;
+    shoot();
+    setTimeout(() => isShootKeyPressed = false, 600);
   }
 }
 
