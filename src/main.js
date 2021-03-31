@@ -26,7 +26,7 @@ const direction = {
   RIGHT: 'right',
 }
 
-// Game ending outcomes.
+// Game endings (player wins or not).
 const end = {
   playerWins: true,
   invadersWin: false,
@@ -99,11 +99,11 @@ onload = () => {
   // Wait for custom font to be loaded.
   document.fonts.load('10pt "FFF Forward"').then(() => {
     // Welcome text.
-    ctx.font = '50px FFF Forward';
+    ctx.font = '44px FFF Forward';
     ctx.textAlign = 'center';
     ctx.fillStyle = 'gray';
     ctx.fillText('Space Invaders', canvas.width/2, canvas.height/3);
-    ctx.font = '24px FFF Forward';
+    ctx.font = '20px FFF Forward';
     ctx.fillStyle = 'white';
     ctx.fillText('Click To Start', canvas.width/2, canvas.height/2);
   });
@@ -261,7 +261,7 @@ function initInvaders() {
     for (let col = 0; col < invaderCols; col++) {
       //  width or length + (margin) * X/Y postition + padding from edge.
       let x = (spriteWidth + px * 3) * col + padding;
-      let y = (spriteHeigth + px * 3) * row + (padding * 3);
+      let y = (spriteHeigth + px * 3) * row + (padding * 4);
       let invader = createSprite(id, x, y);
       invaders.push(invader);
       drawSprite(invader);
@@ -544,6 +544,9 @@ function invaderShoot(invader) {
 
 // End Game.
 function endGame(playerWins) {
+  if (hasGameEnded) {
+    return;
+  }
   hasGameEnded = true;
 
   if (playerWins) {
@@ -552,7 +555,7 @@ function endGame(playerWins) {
     ctx.font = 'bold 40px FFF Forward';
     ctx.fillStyle = 'green';
     ctx.textAlign = 'center';
-    ctx.fillText('YOU WIN', canvas.width/2, canvas.height - (canvas.height - 60));
+    ctx.fillText('YOU WIN', canvas.width/2, canvas.height - (canvas.height - 80));
   } else if (!playerWins) {
     invadersStep = 0;
 
@@ -570,7 +573,7 @@ function endGame(playerWins) {
     ctx.font = 'bold 40px FFF Forward';
     ctx.fillStyle = 'red';
     ctx.textAlign = 'center';
-    ctx.fillText('INVADERS WIN', canvas.width/2, canvas.height - (canvas.height - 60));
+    ctx.fillText('INVADERS WIN', canvas.width/2, canvas.height - (canvas.height - 80));
   }
 }
 
@@ -578,6 +581,11 @@ function endGame(playerWins) {
 
 // Keypress handling.
 function handleKeyPress() {
+  // If dead dont handle any keys.
+  if (player.lives <= 0) {
+    return;
+  }
+
   if (pressedKeys[37]) {
     player.moveDirection = direction.LEFT;
   } else if (pressedKeys[39]) {
