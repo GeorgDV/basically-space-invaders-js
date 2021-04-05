@@ -30,6 +30,24 @@ body, html {
   right: 0.625rem;
 }
 
+.stats-content--score {
+  font-family: 'FFF Forward';
+  font-size: small;
+  text-align: center;
+  margin-top: 0.5rem;
+
+  &#highScore {
+    color: limegreen;
+  }
+
+  &#score {
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    color: white;
+    border-top: 1px solid white;
+  }
+}
+
 .icon--life {
   content: url(../static/player_icon.webp);
   margin-top: 0.5rem;

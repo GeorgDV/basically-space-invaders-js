@@ -19,6 +19,12 @@ let polySynth = new Tone.PolySynth().connect(distortion);
 
 // Templates for creating sprites.
 const templates = require('./templates.json');
+// Browser 'file-system' read-writer for storing high score.
+const fs = require('browserify-fs');
+
+let score = 0;
+let highScore = 0;
+readHighScore();
 
 // Movement directions.
 const direction = {
@@ -87,7 +93,6 @@ let timers = {
 // Keypress handler variables.
 let pressedKeys = [];
 let isShootKeyPressed = false;
-
 
 
 ////////
@@ -223,6 +228,8 @@ function initGame() {
   initInvaders();
   initPlayer();
 
+  initScores();
+
   initKeyHandlerTimer();
   initInvadersTimer();
   initPlayerTimer();
@@ -261,7 +268,7 @@ function initInvaders() {
     for (let col = 0; col < invaderCols; col++) {
       //  width or length + (margin) * X/Y postition + padding from edge.
       let x = (spriteWidth + px * 3) * col + padding;
-      let y = (spriteHeigth + px * 3) * row + (padding * 4);
+      let y = (spriteHeigth + px * 3) * row + (padding * 5);
       let invader = createSprite(id, x, y);
       invaders.push(invader);
       drawSprite(invader);
@@ -339,6 +346,11 @@ function initKeyHandlerTimer() {
   timers.keyHandlerTimer.value = setInterval(() => {
     handleKeyPress();
   }, timers.keyHandlerTimer.interval);
+}
+
+function initScores() {
+  addToCurrentScore(0);
+  updateHighScore(highScore);
 }
 
 
@@ -550,12 +562,20 @@ function endGame(playerWins) {
   hasGameEnded = true;
 
   if (playerWins) {
+    // Bonus score.
+    let bonusScore = 1000 - (invadersStepsCount * 10);
+    addToCurrentScore(bonusScore);
+
     // Ending words.
     ctx.clearRect(0, 0, canvas.width, 80);
     ctx.font = 'bold 40px FFF Forward';
     ctx.fillStyle = 'green';
     ctx.textAlign = 'center';
     ctx.fillText('YOU WIN', canvas.width/2, canvas.height - (canvas.height - 80));
+    ctx.font = 'bold 24px FFF Forward';
+    ctx.fillStyle = 'white';
+    ctx.fillText(`Speed Bonus: ${bonusScore}`, canvas.width/2, canvas.height - (canvas.height - 200));
+    ctx.fillText(`Final Score: ${score}`, canvas.width/2, canvas.height - (canvas.height - 260));
   } else if (!playerWins) {
     invadersStep = 0;
 
@@ -574,6 +594,12 @@ function endGame(playerWins) {
     ctx.fillStyle = 'red';
     ctx.textAlign = 'center';
     ctx.fillText('INVADERS WIN', canvas.width/2, canvas.height - (canvas.height - 80));
+  }
+
+  // Update Highscore.
+  if (score > highScore) {
+    writeHighScore(score);
+    updateHighScore(score);
   }
 }
 
@@ -631,6 +657,8 @@ function detectBulletAndInvaderCollision() {
         bulletX >= invaderLeftX - (px - 3) &&
         bulletY <= invaderBottomY &&
         bulletY >= invaderTopY) {
+        // Update score based on killed invader.
+        updateCurrentScore(invader);
 
         // Update front line invaders.
         updateInvadersFront(invader);
@@ -741,4 +769,45 @@ function rad2deg(rad) {
 
 function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+
+
+////////
+// SCORE READING AND WRITING FUNCTIONS
+function writeHighScore(newHighScore) {
+  fs.writeFile('/highscore.txt', newHighScore.toString());
+}
+
+function readHighScore() {
+  fs.exists('/highscore.txt', (exists) => {
+    if (exists) {
+      fs.readFile('/highscore.txt', 'utf-8', (error, data) => {
+        if (error) throw error;
+        highScore = data ? data : 0;
+      });
+    }
+  });
+}
+
+function updateHighScore(score) {
+  document.querySelector('#highScore').innerHTML = score;
+}
+
+function updateCurrentScore(killedInvader) {
+  switch (killedInvader.template.id) {
+    case 'invader_1-1':
+    case 'invader_1-2':
+      addToCurrentScore(70);
+      break;
+    case 'invader_2-1':
+    case 'invader_2-2':
+      addToCurrentScore(25);
+      break;
+  }
+}
+
+function addToCurrentScore(valueToAdd) {
+  score += valueToAdd;
+  document.querySelector('#score').innerHTML = score;
 }
