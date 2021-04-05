@@ -111,6 +111,14 @@ onload = () => {
     ctx.font = '20px FFF Forward';
     ctx.fillStyle = 'white';
     ctx.fillText('Click To Start', canvas.width/2, canvas.height/2);
+
+    // Display enemy point scores.
+    let invader1 = createSprite('invader_1-1', canvas.width/3 + 30, canvas.height - 300);
+    let invader2 = createSprite('invader_2-1', canvas.width/3 + 30, canvas.height - 200);
+    drawSprite(invader1);
+    drawSprite(invader2);
+    ctx.fillText(' -   75 Points', canvas.width/2 + 40, canvas.height - 270);
+    ctx.fillText(' -   25 Points', canvas.width/2 + 40, canvas.height - 170);
   });
 };
 
@@ -798,7 +806,7 @@ function updateCurrentScore(killedInvader) {
   switch (killedInvader.template.id) {
     case 'invader_1-1':
     case 'invader_1-2':
-      addToCurrentScore(70);
+      addToCurrentScore(75);
       break;
     case 'invader_2-1':
     case 'invader_2-2':
