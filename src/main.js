@@ -248,7 +248,6 @@ function initCanvas() {
   canvas = document.querySelector('#canvas');
   let statsBar = document.querySelector('.stats');
   ctx = canvas.getContext('2d');
-  //canvas.width = window.innerWidth;
   canvas.width = 900;
   canvas.height = window.innerHeight - 5;
 
@@ -262,7 +261,8 @@ function initCanvas() {
   window.addEventListener('deviceorientation', (event) => {
     if (!hasGameStarted) return;
     let tiltX = Math.round(event.gamma * 2 );
-    tiltXHandler(tiltX);
+    let tiltY = Math.round(event.beta * 2);
+    tiltHandler(tiltX, tiltY);
   }, false);
 }
 
@@ -844,11 +844,13 @@ function touchHandler(e) {
   }
 }
 
-function tiltXHandler(tiltX) {
+function tiltHandler(tiltX, tiltY) {
+  // In landscape mode we use Y, otherwise X.
+  let tilt = window.innerHeight < window.innerWidth ? tiltY : tiltX;
   // Direction change upon 20+ degree tilt.
-  if(tiltX > 20) {
+  if(tilt > 20) {
     player.moveDirection = direction.RIGHT;
-  } else if (tiltX < -20) {
+  } else if (tilt < -20) {
     player.moveDirection = direction.LEFT;
   }
 }
