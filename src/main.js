@@ -1,8 +1,8 @@
 import 'regenerator-runtime/runtime';
 
 // Canvas variables.
-let canvas;
-let ctx;
+let canvas = null;
+let ctx  = null;
 
 
 // Sound generation library components.
@@ -56,8 +56,8 @@ let invaderBullets = []; // Invader bullet objects.
 let invaders = []; // Invader objects.
 let invadersFront = [] // Front line of invaders (shooting invaders).
 
-let invaderRows; // Number of ROWS of invaders.
-let invaderCols; // Number of COLUMNS of invaders.
+let invaderRows = null; // Number of ROWS of invaders.
+let invaderCols = null; // Number of COLUMNS of invaders.
 
 let invadersMoveDirection = direction.RIGHT; // By default invaders move right at the beginning.
 let invadersStep = px * 3; // Length of a single invaders DOWN step.
@@ -749,7 +749,8 @@ function generatePlayerLifeIcons() {
   let statsContent = document.querySelector('.stats-content');
   let nodes = [];
   for (let i = 0; i < 3; i++) {
-    let img = document.createElement('img');
+    // Span used because - https://stackoverflow.com/questions/47183886/css-content-image-not-showing-up-on-firefox
+    let img = document.createElement('span');
     img.classList.add('icon--life')
     nodes.push(img);
   }

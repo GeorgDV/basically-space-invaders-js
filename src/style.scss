@@ -50,6 +50,8 @@ body, html {
 
 .icon--life {
   content: url(../static/player_icon.webp);
+  height: 2.5rem;
+  width: 3rem;
   margin-top: 0.5rem;
 }
 
@@ -61,8 +63,8 @@ body, html {
 
 #github-logo {
   position: absolute;
-  content: url(../static/github_logo_light.png);
   width: 2.5rem;
+  height: 2.5rem;
   top: 0.75rem;
   right: 0.75rem;
 }
