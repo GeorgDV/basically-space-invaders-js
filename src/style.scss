@@ -11,7 +11,7 @@ body, html {
 
 #canvas {
   border: 1px solid white;
-  min-height: 700px;
+  min-height: 300px;
   min-width: 300px;
   max-width: 900px;
 }
@@ -20,13 +20,6 @@ body, html {
   display: flex;
   margin: 0 auto;
   width: fit-content;
-}
-
-@media only screen and (max-width: 980px) {
-  #canvas {
-    min-height: 300px;
-    width: 80vw;
-  }
 }
 
 .stats {

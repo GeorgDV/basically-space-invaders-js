@@ -272,7 +272,7 @@ function initAudio() {
 }
 
 function initInvaders() {
-  invaderRows = Math.floor((canvas.height / 3) / (spriteWidth * 1.2));
+  invaderRows = Math.floor((canvas.height / 3) / (spriteWidth * 1.3));
   invaderCols = Math.floor((canvas.width) / (spriteHeigth  * 3));
   for (let row = 0; row < invaderRows; row++) {
     let id = 'invader_2-1';
@@ -345,7 +345,7 @@ function initInvaderBulletTimer() {
 
   timers.invaderBulletTimer.value = setInterval(() => {
     // Choose if to shoot or not.
-    let random = getRandomInteger(1, invaders.length === 1 ? 6 : 20);
+    let random = getRandomInteger(1, invaders.length === 1 ? 6 : 18);
     if (random === 1 && invadersFront.length > 0) {
       // Get random front line invader to shoot.
       let index = Math.floor(Math.random() * invadersFront.length);
