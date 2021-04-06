@@ -255,6 +255,15 @@ function initCanvas() {
   statsBar.style.height = canvas.height;
 
   generatePlayerLifeIcons();
+
+  // Init mobile controls.
+  canvas.addEventListener('touchstart', (event) => touchHandler(event));
+  canvas.addEventListener('touchmove', (event) => touchHandler(event));
+  window.addEventListener('deviceorientation', (event) => {
+    if (!hasGameStarted) return;
+    let tiltX = Math.round(event.gamma * 2 );
+    tiltXHandler(tiltX);
+  }, false);
 }
 
 function initAudio() {
@@ -819,4 +828,27 @@ function updateCurrentScore(killedInvader) {
 function addToCurrentScore(valueToAdd) {
   score += valueToAdd;
   document.querySelector('#score').innerHTML = score;
+}
+
+
+
+
+////////
+// MOBILE CONTROLS HANDLERS
+function touchHandler(e) {
+  if (!hasGameStarted) return;
+  if(e.touches && !isShootKeyPressed) {
+    isShootKeyPressed = true;
+    playerShoot();
+    setTimeout(() => isShootKeyPressed = false, hasGameEnded ? 100 : 650);
+  }
+}
+
+function tiltXHandler(tiltX) {
+  // Direction change upon 20+ degree tilt.
+  if(tiltX > 20) {
+    player.moveDirection = direction.RIGHT;
+  } else if (tiltX < -20) {
+    player.moveDirection = direction.LEFT;
+  }
 }
