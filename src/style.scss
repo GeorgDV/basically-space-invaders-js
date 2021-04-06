@@ -12,7 +12,21 @@ body, html {
 #canvas {
   border: 1px solid white;
   min-height: 700px;
+  min-width: 300px;
   max-width: 900px;
+}
+
+.content {
+  display: flex;
+  margin: 0 auto;
+  width: fit-content;
+}
+
+@media only screen and (max-width: 980px) {
+  #canvas {
+    min-height: 300px;
+    width: 80vw;
+  }
 }
 
 .stats {
@@ -53,12 +67,6 @@ body, html {
   height: 2.5rem;
   width: 3rem;
   margin-top: 0.5rem;
-}
-
-.content {
-  display: flex;
-  margin: 0 auto;
-  width: fit-content;
 }
 
 #github-logo {
