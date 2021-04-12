@@ -836,7 +836,7 @@ function addToCurrentScore(valueToAdd) {
 ////////
 // MOBILE CONTROLS HANDLERS
 function touchHandler(e) {
-  if (!hasGameStarted) return;
+  if (!hasGameStarted || player.lives <= 0) return;
   if(e.touches && !isShootKeyPressed) {
     isShootKeyPressed = true;
     playerShoot();
@@ -848,7 +848,7 @@ function tiltHandler(tiltX, tiltY) {
   // In landscape mode we use Y, otherwise X.
   let tilt = window.innerHeight < window.innerWidth ? tiltY : tiltX;
   // Direction change upon 20+ degree tilt.
-  if(tilt > 20) {
+  if (tilt > 20) {
     player.moveDirection = direction.RIGHT;
   } else if (tilt < -20) {
     player.moveDirection = direction.LEFT;
