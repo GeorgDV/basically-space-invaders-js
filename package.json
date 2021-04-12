@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "browserify-fs": "^1.0.0",
+    "parcel-plugin-static-files-copy": "^2.6.0",
     "sass": "^1.32.8",
     "startaudiocontext": "^1.2.1",
     "tone": "^14.7.77"
@@ -16,9 +17,9 @@
     "clean": "rm -rf dist/",
     "dev": "parcel serve ./public/index.html",
     "redev": "rm -rf dist/ && parcel serve ./public/index.html",
-    "build": "parcel build ./public/index.html",
-    "deploy": "parcel build ./public/index.html && surge dist/ --domain https://basically-space-invaders.surge.sh",
-    "redeploy": "rm -rf dist/ && parcel build ./public/index.html && surge dist/ --domain https://basically-space-invaders.surge.sh"
+    "build": "parcel build ./public/index.html --no-content-hash --no-source-maps --no-cache --no-minify",
+    "deploy": "parcel build ./public/index.html --no-content-hash --no-source-maps --no-cache --no-minify && surge dist/ --domain https://basically-space-invaders.surge.sh",
+    "redeploy": "rm -rf dist/ && parcel build ./public/index.html --no-content-hash --no-source-maps --no-cache --no-minify && surge dist/ --domain https://basically-space-invaders.surge.sh"
   },
   "repository": {
     "type": "git",
@@ -30,5 +31,9 @@
   "bugs": {
     "url": "https://github.com/GeorgDV/some-game/issues"
   },
-  "homepage": "https://github.com/GeorgDV/some-game#readme"
+  "homepage": "https://github.com/GeorgDV/some-game#readme",
+  "staticFiles": {
+    "staticPath": ["public", "src", "static"],
+    "watcherGlob": "**"
+  }
 }

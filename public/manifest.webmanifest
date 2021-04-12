@@ -8,27 +8,27 @@
   "start_url": "index.html",
   "icons": [
     {
-      "src": "icons/icon-16x16.png",
+      "src": "../static/icon-16x16.png",
       "sizes": "16x16",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-32x32.png",
+      "src": "../static/icon-32x32.png",
       "sizes": "32x32",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-64x64.png",
+      "src": "../static/icon-64x64.png",
       "sizes": "64x64",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-128x128.png",
+      "src": "../static/icon-128x128.png",
       "sizes": "128x128",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-256x256.png",
+      "src": "../static/icon-256x256.png",
       "sizes": "256x256",
       "type": "image/png"
     }

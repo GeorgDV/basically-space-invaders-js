@@ -6,7 +6,14 @@ self.addEventListener('install', e => {
       return cache.addAll([
         './',
         './index.html',
-        './manifest.webmanifest'
+        './manifest.webmanifest',
+        './main.js',
+        './templates.json',
+        './style.scss',
+        './FFFFORWA.TTF',
+        './favicon.ico',
+        './github_logo_light.png',
+        './player_icon.webp',
       ]);
     })
   );
