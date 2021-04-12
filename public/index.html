@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" name="viewport" content="user-scalable=no">
+    <meta name="theme-color" content="#000000">
     <title>Space Invaders</title>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('serviceWorker.js', { scope: './' })
+        }
+    </script>
     <script src="../src/main.js"></script>
-    <link rel="stylesheet" href="style.scss">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="../src/style.scss">
+    <link rel="apple-touch-icon" href="../static/player_icon.webp">
     <link rel="shortcut icon" type="image/jpg" href="favicon.ico"/>
 </head>
 <body>

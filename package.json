@@ -13,9 +13,12 @@
     "tone": "^14.7.77"
   },
   "scripts": {
+    "clean": "rm -rf dist/",
     "dev": "parcel serve ./public/index.html",
+    "redev": "rm -rf dist/ && parcel serve ./public/index.html",
     "build": "parcel build ./public/index.html",
-    "deploy": "parcel build ./public/index.html && surge dist/ --domain https://basically-space-invaders.surge.sh"
+    "deploy": "parcel build ./public/index.html && surge dist/ --domain https://basically-space-invaders.surge.sh",
+    "redeploy": "rm -rf dist/ && parcel build ./public/index.html && surge dist/ --domain https://basically-space-invaders.surge.sh"
   },
   "repository": {
     "type": "git",
