@@ -17,9 +17,9 @@
     "clean": "rm -rf dist/",
     "dev": "parcel serve ./public/index.html",
     "redev": "rm -rf dist/ && parcel serve ./public/index.html",
-    "build": "parcel build ./public/index.html --no-content-hash --no-source-maps --no-cache --no-minify",
-    "deploy": "parcel build ./public/index.html --no-content-hash --no-source-maps --no-cache --no-minify && surge dist/ --domain https://basically-space-invaders.surge.sh",
-    "redeploy": "rm -rf dist/ && parcel build ./public/index.html --no-content-hash --no-source-maps --no-cache --no-minify && surge dist/ --domain https://basically-space-invaders.surge.sh"
+    "build": "parcel build ./public/index.html --no-content-hash --no-source-maps",
+    "deploy": "parcel build ./public/index.html --no-content-hash --no-source-maps && surge dist/ --domain https://basically-space-invaders.surge.sh",
+    "redeploy": "rm -rf dist/ && parcel build ./public/index.html --no-content-hash --no-source-maps && surge dist/ --domain https://basically-space-invaders.surge.sh"
   },
   "repository": {
     "type": "git",

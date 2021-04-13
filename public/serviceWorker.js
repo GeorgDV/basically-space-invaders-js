@@ -8,12 +8,12 @@ self.addEventListener('install', e => {
         './index.html',
         './manifest.webmanifest',
         './main.js',
-        './templates.json',
-        './style.scss',
+        './style.css',
         './FFFFORWA.TTF',
         './favicon.ico',
         './github_logo_light.png',
         './player_icon.webp',
+        './templates.json',
       ]);
     })
   );
